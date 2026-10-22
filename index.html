@@ -146,6 +146,7 @@ details.cat .btn{margin:6px 0 12px}
     <button data-act="tab" data-tab="prices">Prices</button>
     <button data-act="tab" data-tab="currency">Currency</button>
     <button data-act="tab" data-tab="saved">Saved</button>
+    <button data-act="tab" data-tab="subscribe">Subscribe</button>
     <button data-act="tab" data-tab="feedback">Feedback</button>
     <button data-act="tab" data-tab="about">About</button>
     <button data-act="tab" data-tab="terms">Terms</button>
@@ -391,6 +392,17 @@ function setCountry(iso,opts={}){
 
 /* ---------- persistence (platform storage with browser fallback) ---------- */
 const STORAGE_KEY='we-state';
+const TRIAL_KEY='we-trial-usage';
+const FREE_TRIAL_LIMIT=3;
+const SUBSCRIPTION_PRICE='GH₵150/month';
+// Paystack live public key supplied by the site owner. Public keys may be used on the frontend; secret keys must remain on a secure backend.
+const PAYSTACK_PUBLIC_KEY='pk_live_8e0d8c99f700b5a53dafce532b9e05637621dc73';
+function trialUsage(){try{return Math.max(0,Math.min(999,parseInt(localStorage.getItem(TRIAL_KEY)||'0',10)||0))}catch(e){return 0}}
+function trialRemaining(){return Math.max(0,FREE_TRIAL_LIMIT-trialUsage())}
+function isSubscribed(){try{return localStorage.getItem('we-subscription-status')==='active'}catch(e){return false}}
+function recordTrialUse(){if(isSubscribed())return true;const n=trialUsage();if(n>=FREE_TRIAL_LIMIT)return false;try{localStorage.setItem(TRIAL_KEY,String(n+1))}catch(e){}return true}
+function canUseEstimator(){return isSubscribed()||trialRemaining()>0}
+
 let _pt;
 function stateForStorage(){
   return JSON.stringify({country:S.country,countrySet:S.countrySet,base:S.base,cur:S.cur,margin:S.margin,r:S.r,ratesDate:S.ratesDate,watch:S.watch,prices:S.prices,saved:S.saved,seq:S.seq,est:S.est});
@@ -488,7 +500,9 @@ function renderEstimate(){
     <p class="hint">This sets your home currency, regions and tax label. You can change it later in the Currency tab.</p>
     <label>Country<select id="firstCountry">${countryOptions(S.country)}</select></label>
     <div class="actions"><button class="btn" data-act="confirmCountry">Use ${esc(ctry.name)}</button></div></div>`;
+  const trialBanner=isSubscribed()?`<div class="blk"><h2>Subscription active</h2><p>Your subscription is marked active on this browser.</p></div>`:`<div class="blk"><h2>Free trial: ${trialRemaining()} of ${FREE_TRIAL_LIMIT} estimates left</h2><p class="hint">Try Work Estimator free for 3 estimates. After the trial, subscribe for ${SUBSCRIPTION_PRICE} to continue using estimate and quotation actions.</p><div class="actions"><button class="btn alt" data-act="tab" data-tab="subscribe">View subscription</button></div></div>`;
   $('#view').innerHTML=`
+  ${trialBanner}
   ${welcome}
   <div class="blk">
     <h2>Type of work</h2>
@@ -973,7 +987,11 @@ function renderPrivacy(){
 function renderHelp(){
   $('#view').innerHTML=`<div class="blk"><h2>Help & Support</h2><h4>How to prepare an estimate</h4><ol><li>Choose your country and currency.</li><li>Select the type of work.</li><li>Enter customer and project details.</li><li>Add each material, service or cost, then enter quantity and rate.</li><li>Review overheads, contingency, profit and applicable taxes.</li><li>Save the estimate and preview the quotation. Check all details before sharing or saving as PDF.</li></ol><h4>Important checks</h4><ul><li>Use current prices from your suppliers.</li><li>Confirm tax rates and local rules with the relevant authority.</li><li>Keep a separate backup of important quotations.</li><li>If the screen is blank, open the published website in an up-to-date browser such as Chrome rather than opening the HTML file from Downloads.</li></ul><p><b>Website:</b> <a href="https://transcendent-cupcake-faee0e.netlify.app/" target="_blank" rel="noopener">Open Work Estimator</a></p><p class="note">A verified support email or phone number has not been configured in this page. Add official contact details before publishing.</p></div>`;
 }
-const VIEWS={estimate:renderEstimate,catalogue:renderCatalogue,prices:renderPrices,currency:renderCurrency,saved:renderSaved,feedback:renderFeedback,about:renderAbout,terms:renderTerms,privacy:renderPrivacy,help:renderHelp};
+function renderSubscribe(){
+  const used=trialUsage(),remaining=trialRemaining(),active=isSubscribed();
+  $('#view').innerHTML=`<div class="blk"><h2>Work Estimator Subscription</h2><p>Use your 3 free estimates to try the app. When the free trial ends, a subscription is required to continue using estimate and quotation actions.</p><div class="total"><small>Monthly subscription</small><div class="big">GH₵150</div><small>per month · price shown in Ghana cedis</small></div><div class="row"><span>Free estimates used</span><b>${used} / ${FREE_TRIAL_LIMIT}</b></div><div class="row"><span>Free estimates remaining</span><b>${remaining}</b></div><div class="row"><span>Subscription status</span><b>${active?'Active on this browser':'Not active'}</b></div>${active?'<p class="note">Your browser currently stores an active status. This is not proof of a verified payment.</p>':'<p class="note warn">Paystack live public key has been added to this app, but checkout and secure payment verification are not connected yet. Do not pay through this page until the backend is configured to verify the amount and transaction before activating a subscription.</p>'}<div class="actions"><button class="btn" data-act="subscribePay">Subscribe for GH₵150/month</button><button class="btn alt" data-act="tab" data-tab="estimate">Back to estimator</button></div><h4>How the trial works</h4><ol><li>You can use up to 3 free estimates.</li><li>The app counts a trial when you save an estimate or create a quotation preview.</li><li>After the trial, estimate and quotation actions are locked until a real subscription system is connected and payment is verified.</li></ol><p class="hint">Trial count is stored in this browser only and can be reset by clearing browser data. This is a front-end trial, not secure account-based billing. For a public paid launch, usage and subscription status must be checked on a server.</p></div>`;
+}
+const VIEWS={estimate:renderEstimate,catalogue:renderCatalogue,prices:renderPrices,currency:renderCurrency,saved:renderSaved,subscribe:renderSubscribe,feedback:renderFeedback,about:renderAbout,terms:renderTerms,privacy:renderPrivacy,help:renderHelp};
 function setTab(t){
   S.tab=t;
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
@@ -1050,6 +1068,7 @@ document.addEventListener('click',e=>{
   const a=b.dataset.act,E=S.est;
   switch(a){
     case'tab':setTab(b.dataset.tab);break;
+    case'subscribePay':toast('Paystack public key is configured. Secure checkout and server-side payment verification must be connected before accepting payments.');break;
     case'sendFeedback':{const name=$('#fb-name')?.value.trim()||'Not provided',email=$('#fb-email')?.value.trim()||'Not provided',topic=$('#fb-topic')?.value||'General feedback',message=$('#fb-message')?.value.trim()||'';if(!message){toast('Please enter your feedback first');break}const body=`Name: ${name}\nEmail: ${email}\nTopic: ${topic}\n\n${message}`;const subject=encodeURIComponent('Work Estimator feedback: '+topic);window.location.href='mailto:?subject='+subject+'&body='+encodeURIComponent(body);break}
     case'clearFeedback':renderFeedback();break;
     case'confirmCountry':{
@@ -1069,10 +1088,10 @@ document.addEventListener('click',e=>{
       upsertPrice({name:l.name.trim(),unit:l.unit||'item',price:num(l.rate),region:E.info.region||'All regions',supplier:''});
       toast('Saved to price book');break;
     }
-    case'saveEst':snapshotSave();persist();toast('Estimate saved');break;
-    case'preview':openQuote();break;
-    case'print':doPrint();break;
-    case'pdf':savePdf();break;
+    case'saveEst':{if(!canUseEstimator()){setTab('subscribe');toast('Your 3 free estimates are finished. Subscribe to continue.');break}if(!isSubscribed()&&!E._trialCounted){if(!recordTrialUse()){setTab('subscribe');toast('Free trial finished.');break}E._trialCounted=true}snapshotSave();persist();toast('Estimate saved');break}
+    case'preview':{if(!canUseEstimator()){setTab('subscribe');toast('Your 3 free estimates are finished. Subscribe to continue.');break}if(!isSubscribed()&&!E._trialCounted){if(!recordTrialUse()){setTab('subscribe');toast('Free trial finished.');break}E._trialCounted=true;persist()}openQuote();break}
+    case'print':{if(!canUseEstimator()){setTab('subscribe');toast('Your 3 free estimates are finished. Subscribe to continue.');break}if(!isSubscribed()&&!E._trialCounted){if(!recordTrialUse()){setTab('subscribe');break}E._trialCounted=true;persist()}doPrint();break}
+    case'pdf':{if(!canUseEstimator()){setTab('subscribe');toast('Your 3 free estimates are finished. Subscribe to continue.');break}if(!isSubscribed()&&!E._trialCounted){if(!recordTrialUse()){setTab('subscribe');break}E._trialCounted=true;persist()}savePdf();break}
     case'closeQuote':closeQuote();break;
     case'copy':copyText(buildText());break;
     case'newEst':S.seq++;S.est=newEstimate();persist();renderEstimate();window.scrollTo(0,0);toast('New estimate started');break;
