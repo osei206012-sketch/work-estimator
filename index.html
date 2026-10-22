@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Work Estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF0EA; --card:#FBFBF7; --ink:#17203A; --indigo:#27358A; --indigo-d:#1A2461;
+  --gold:#E2AA2B; --line:#CDD1C6; --muted:#5F6878; --bad:#A8382A; --ok:#2E6A4E;
+  --g-materials:#27358A; --g-labour:#2E6A4E; --g-equipment:#9A6200; --g-transport:#6B3FA0; --g-other:#7A8190;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;color:var(--ink);font:15px/1.5 "Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;background:#FFF1D0;background:linear-gradient(165deg,#FFE9A8 0%,#FFD0E4 28%,#CFDCFF 60%,#BDF2DB 100%) fixed}
+h1,h2,h3,h4{font-family:"Bricolage Grotesque","Public Sans",system-ui,sans-serif;margin:0;line-height:1.15}
+h1{font-size:26px;font-weight:800;letter-spacing:-.01em}
+h2{font-size:19px;font-weight:800;margin-bottom:4px}
+h4{font-size:14px;font-weight:600;margin:14px 0 4px}
+p{margin:6px 0}
+.wrap{max-width:760px;margin:0 auto;padding:0 14px}
+header{padding:20px 0 18px;background:linear-gradient(120deg,#2B2A8F 0%,#7A2FC0 55%,#E4572E 100%);color:#fff;border-bottom:5px solid var(--gold)}
+header h1{color:#fff}
+header .wrap{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+header p{color:rgba(255,255,255,.88);margin:4px 0 0;font-size:14px}
+#curChip{flex:none;border:0;background:#fff;color:var(--indigo-d);font:700 14px "Public Sans",sans-serif;border-radius:999px;padding:8px 14px;cursor:pointer;white-space:nowrap;box-shadow:0 2px 0 rgba(0,0,0,.18)}
+nav.tabs{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid rgba(23,32,58,.12)}
+nav.tabs .wrap{display:flex;overflow-x:auto;gap:2px;scrollbar-width:none}
+nav.tabs button{flex:none;background:none;border:0;border-bottom:4px solid transparent;padding:12px 14px 9px;font:600 15px "Public Sans",sans-serif;color:var(--muted);cursor:pointer}
+nav.tabs button.on{color:var(--indigo);border-bottom-color:var(--gold)}
+main{padding-bottom:70px}
+.blk{--accent:#7A2FC0;background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.8);border-top:6px solid var(--accent);border-radius:12px;padding:14px;margin:14px 0}
+#view>.blk:nth-of-type(4n+1){--accent:#7A2FC0}
+#view>.blk:nth-of-type(4n+2){--accent:#E4572E}
+#view>.blk:nth-of-type(4n+3){--accent:#0E9F7A}
+#view>.blk:nth-of-type(4n){--accent:#E6A700}
+.blk h2{color:var(--indigo-d)}
+.hint,.note{color:var(--muted);font-size:13.5px}
+.note{border-left:3px solid var(--gold);padding-left:10px;margin:10px 0}
+.warn{border-left-color:var(--bad);color:var(--bad)}
+label{display:block;font-size:12.5px;color:var(--muted);font-weight:500}
+input,select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-top:3px}
+textarea{min-height:64px;resize:vertical}
+input[type=checkbox]{width:auto;margin:0 6px 0 0}
+:focus-visible{outline:3px solid var(--gold);outline-offset:1px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+@media(max-width:480px){.grid3{grid-template-columns:1fr 1fr}}
+.btn{font:600 15px "Public Sans",sans-serif;background:linear-gradient(120deg,#2B2A8F,#7A2FC0);color:#fff;border:0;border-radius:8px;padding:11px 16px;cursor:pointer}
+.btn.alt{background:transparent;color:var(--indigo);border:2px solid var(--indigo);padding:9px 14px}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:6px}
+.btn.danger{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.ln{border-left:5px solid var(--g-materials);background:#fff;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0 8px 8px 0;padding:10px;margin:8px 0}
+.ln[data-g=labour]{border-left-color:var(--g-labour)}
+.ln[data-g=equipment]{border-left-color:var(--g-equipment)}
+.ln[data-g=transport]{border-left-color:var(--g-transport)}
+.ln[data-g=other]{border-left-color:var(--g-other)}
+.ln-top{display:flex;gap:8px;align-items:center}
+.ln-top input{margin:0;font-weight:600}
+.x{flex:none;width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:6px;font-size:20px;line-height:1;color:var(--muted);cursor:pointer}
+.ln-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+@media(max-width:520px){.ln-grid{grid-template-columns:1fr 1fr}}
+.ln-foot{display:flex;align-items:center;gap:8px;margin-top:8px}
+.ln-foot select{width:auto;margin:0;font-size:14px;padding:5px 8px}
+.ln-foot .lt{margin-left:auto;font-variant-numeric:tabular-nums;font-size:16px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.row b,.row .v{font-variant-numeric:tabular-nums;font-weight:600;text-align:right}
+.row .pct{width:64px;display:inline-block;margin:0 4px;padding:4px 6px;text-align:right}
+.row.sub{border-bottom:1px solid var(--ink)}
+.row.sub b{font-weight:800}
+.total{background:linear-gradient(130deg,#1A2461 0%,#5B2A9E 60%,#B23A7E 100%);color:#fff;border-top:6px solid var(--gold);border-radius:10px;padding:16px;margin-top:14px}
+.total small{color:#C9CFEF;display:block;font-size:13px}
+.total .big{font:800 34px/1.1 "Bricolage Grotesque","Public Sans",sans-serif;font-variant-numeric:tabular-nums;margin:4px 0;word-break:break-word}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font:500 13.5px "Public Sans",sans-serif;color:var(--ink)}
+button.chip{cursor:pointer}
+button.chip.on{background:var(--indigo);border-color:var(--indigo);color:#fff}
+details.sec{background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.8);border-left:6px solid #0E9F7A;border-radius:12px;margin:10px 0;padding:0 14px}
+details.sec:nth-of-type(3n+2){border-left-color:#E4572E}
+details.sec:nth-of-type(3n){border-left-color:#E6A700}
+details.sec>summary{font:800 17px "Bricolage Grotesque","Public Sans",sans-serif;padding:14px 0;cursor:pointer;color:var(--indigo-d)}
+details.cat{border-top:1px solid var(--line);padding:2px 0}
+details.cat>summary{padding:11px 0;cursor:pointer;font-weight:600}
+details.cat ul{margin:4px 0 8px;padding-left:20px;color:#2c354d}
+details.cat .btn{margin:6px 0 12px}
+.count{font:600 12px "Public Sans",sans-serif;color:var(--muted);margin-left:6px}
+.item{border-bottom:1px dashed var(--line);padding:10px 0;display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
+.item .meta{color:var(--muted);font-size:13px;grid-column:1/-1}
+.item .p{font-variant-numeric:tabular-nums;font-weight:600}
+.tag{display:inline-block;font:600 11.5px "Public Sans",sans-serif;border-radius:4px;padding:1px 6px;margin-left:6px;background:#F6E3B0;color:#6b4800}
+.empty{color:var(--muted);padding:18px 4px;text-align:center}
+.rate-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}
+.rate-row .eq{display:flex;align-items:center;gap:8px;font-size:14px;flex-wrap:wrap}
+.rate-row input{margin:0;width:120px}
+.rate-row .nm small{display:block;color:var(--muted);font-size:12.5px;max-width:150px}
+.conv-out{font:800 26px/1.2 "Bricolage Grotesque","Public Sans",sans-serif;font-variant-numeric:tabular-nums;margin:12px 0 2px;word-break:break-word}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;max-width:90%;text-align:center}
+#toast.show{opacity:1}
+#printArea{display:none}
+#printArea.open{display:block;position:fixed;inset:0;z-index:30;overflow:auto;background:rgba(23,32,58,.78)}
+.qbar{position:sticky;top:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;background:#fff;border-bottom:3px solid var(--gold)}
+.qbar .spacer{flex:1}
+.qbar .btn{padding:9px 14px}
+.qpaper{background:#fff;max-width:780px;margin:14px auto;padding:22px;border-radius:8px}
+.qhint{max-width:780px;margin:0 auto 14px;color:#fff;font-size:13px;padding:0 14px}
+.q{font:14px/1.45 "Public Sans",Arial,sans-serif;color:#000}
+.q h1{font-size:26px;color:#2B2A8F;border-bottom:4px solid #E2AA2B;padding-bottom:6px}
+.q table{width:100%;border-collapse:collapse;margin:12px 0}
+.q th,.q td{border-bottom:1px solid #bbb;padding:5px 6px;text-align:left;vertical-align:top}
+.q th{border-bottom:2px solid #2B2A8F;background:#EEF0FA}
+.q .r{text-align:right;font-variant-numeric:tabular-nums}
+.q .tot td{font-weight:700;border-top:2px solid #2B2A8F;background:#FFE9A8}
+@media print{
+  @page{margin:14mm}
+  body>*:not(#printArea){display:none!important}
+  #printArea:not(.open){display:none!important}
+  #printArea.open{position:static;overflow:visible;background:#fff;display:block}
+  .qbar,.qhint{display:none!important}
+  .qpaper{max-width:none;margin:0;padding:0;border-radius:0}
+  body{background:#fff!important}
+  .q *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media(prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div>
+      <h1>Work Estimator</h1>
+      <p>Measure the job, price each item, and issue a quotation in any country.</p>
+    </div>
+    <button id="curChip" data-act="tab" data-tab="currency" aria-label="Country and currency. Open currency tab">GHS</button>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap" id="tabs">
+    <button data-act="tab" data-tab="estimate">Estimate</button>
+    <button data-act="tab" data-tab="catalogue">Catalogue</button>
+    <button data-act="tab" data-tab="prices">Prices</button>
+    <button data-act="tab" data-tab="currency">Currency</button>
+    <button data-act="tab" data-tab="saved">Saved</button>
+    <button data-act="tab" data-tab="feedback">Feedback</button>
+    <button data-act="tab" data-tab="about">About</button>
+    <button data-act="tab" data-tab="terms">Terms</button>
+    <button data-act="tab" data-tab="privacy">Privacy</button>
+    <button data-act="tab" data-tab="help">Help</button>
+  </div>
+</nav>
+
+<main><div class="wrap" id="view"></div></main>
+
+<datalist id="namelist"></datalist>
+<div id="toast" role="status"></div>
+<div id="printArea" role="dialog" aria-label="Quote preview">
+  <div class="qbar">
+    <button class="btn alt sm" data-act="closeQuote">Close</button>
+    <span class="spacer"></span>
+    <button class="btn alt sm" data-act="print">Print</button>
+    <button class="btn sm" data-act="pdf">Save as PDF</button>
+  </div>
+  <div class="qpaper" id="qpaper"></div>
+  <p class="qhint">Print opens your device's print dialog. Save as PDF creates a PDF file without using the print dialog. If nothing downloads inside this preview, open the app in your browser.</p>
+</div>
+
+<script>
+/* ---------- Catalogue data (from the Ghana national estimation catalogue) ---------- */
+const CAT_SRC = [
+['Building and construction works',[
+ ['Building construction','Project location and site conditions;Type of building (house, shop, office, school, warehouse);Building dimensions and number of floors;Architectural and structural drawings;Foundation type and soil conditions;Quality and specification of materials;Labour and equipment requirements;Project duration','Site clearing|m²;Excavation|m³;Cement|bag;Sand|m³;Stones or aggregates|m³;Blocks|piece;Reinforcement bars|kg;Concrete|m³;Roofing materials|m²;Doors and windows|piece;Electrical installation|point;Plumbing installation|point;Labour|day;Equipment rental|day','A quantity surveyor should measure quantities from the drawings and specifications before a detailed construction estimate is issued.'],
+ ['Masonry and block laying','Length and height of each wall;Wall thickness;Block size and type;Number and size of doors and windows;Mortar requirements;Plastering requirements;Mason\'s labour rate;Transport and material wastage','Blocks|piece;Cement|bag;Sand|m³;Water|litre;Mortar|m³;Scaffolding|day;Masonry labour|m²;Plastering materials|m²;Plastering labour|m²'],
+ ['Roofing','Building dimensions;Roof shape and slope;Roof covering type;Roofing frame material;Roof area;Ridges, hips, valleys and roof penetrations;Gutter and downpipe requirements;Labour and access requirements','Roofing sheets or tiles|m²;Timber or steel trusses|piece;Purlins|metre;Nails, screws and fasteners|kg;Ridge caps and flashings|metre;Gutters and downpipes|metre;Protective coatings|litre;Installation labour|m²;Scaffolding|day;Transportation|trip'],
+ ['Painting','Total wall and ceiling area;Surface condition;Interior or exterior;Paint type and quality;Number of coats;Paint coverage rate;Primer and preparation requirements','Paint|litre;Primer|litre;Filler and putty|kg;Sandpaper|sheet;Brushes and rollers|piece;Masking materials|roll;Surface preparation|m²;Painter\'s labour|m²;Access equipment|day'],
+ ['Tiling and flooring','Floor or wall area;Tile dimensions;Tile type and quality;Cutting and wastage allowance;Floor condition;Adhesive and grout requirements;Skirting requirements','Tiles|m²;Adhesive|bag;Grout|kg;Tile spacers|pack;Waterproofing materials|m²;Floor preparation|m²;Cutting and finishing|m²;Tiler\'s labour|m²'],
+ ['Carpentry and joinery','Type of furniture or woodwork;Dimensions;Wood or board type;Finish and colour;Hardware requirements;Installation location','Timber or boards|piece;Nails and screws|kg;Hinges|piece;Handles and locks|piece;Glue|tin;Paint or varnish|litre;Cutting and fabrication|job;Installation labour|day;Transportation|trip'],
+ ['Plumbing','Number of bathrooms, kitchens and water outlets;Pipe lengths and diameters;Water supply arrangement;Drainage layout;Number of taps, toilets and sinks;Water tank and pump requirements;Testing requirements','Water pipes|metre;Drainage pipes|metre;Pipe fittings|piece;Valves|piece;Taps|piece;Toilets|piece;Sinks and basins|piece;Water tanks|piece;Pumps|piece;Installation labour|point;Pressure testing and leak checks|job'],
+ ['Electrical installation','Building plan;Number of rooms;Lighting points;Socket outlets;Switches;Appliance loads;Cable routes and lengths;Distribution board requirements;Earthing and protection requirements;Testing and inspection requirements','Electrical cables|metre;Conduits and trunking|metre;Junction boxes|piece;Switches|piece;Socket outlets|piece;Lighting fixtures|piece;Distribution boards|piece;Circuit breakers|piece;Earthing materials|set;Installation labour|point;Testing and commissioning|job'],
+ ['Welding and metal fabrication','Type of metal structure;Dimensions and design;Metal type and thickness;Number of gates, windows or railings;Welding requirements;Paint or protective coating;Installation location','Steel bars and sections|length;Metal sheets|sheet;Hinges and locks|piece;Welding electrodes|pack;Cutting discs|piece;Grinding materials|piece;Paint|litre;Fabrication labour|day;Installation and transport|job'],
+ ['Borehole drilling','Location and site accessibility;Expected drilling depth;Ground and geological conditions;Required borehole yield;Pump type and capacity;Casing requirements;Water testing requirements;Storage and distribution arrangements','Mobilisation|job;Drilling|metre;Casing|metre;Gravel packing and development|job;Pump and accessories|set;Water storage tank|piece;Pipework|metre;Water testing|test;Installation and labour|job','Borehole cost depends heavily on ground conditions and actual drilling depth. A preliminary estimate is not a guaranteed final price.']
+]],
+['Technical, repair and installation works',[
+ ['Automobile repairs','Vehicle make, model and year;Engine type;Customer\'s description of the problem;Diagnostic findings;Required spare parts;Labour hours;Whether towing is required','Spare parts|piece;Engine oil and other fluids|litre;Filters|piece;Diagnostic charges|job;Labour|hour;Consumables|job;Towing|trip;Testing after repair|job'],
+ ['Motorcycle repairs','Motorcycle make and model;Engine capacity;Reported fault;Parts required;Labour time','Tyres|piece;Tubes|piece;Brake pads|set;Chain and sprockets|set;Batteries|piece;Engine oil|litre;Spare parts|piece;Labour|hour'],
+ ['Air-conditioning installation and repair','Room dimensions;Cooling requirements;Type and capacity of air conditioner;Installation location;Pipe length;Electrical requirements;Drainage arrangements','Air-conditioning unit|unit;Copper piping|metre;Insulation|metre;Electrical cables|metre;Mounting brackets|set;Drainage pipes|metre;Installation labour|unit;Testing and commissioning|job'],
+ ['Solar installation','Customer\'s electricity consumption;Appliances to be powered;Required backup duration;Available installation space;Solar exposure and shading;Battery requirements;Grid connection requirements','Solar panels|panel;Inverter|unit;Batteries|unit;Mounting structures|set;Cables and connectors|set;Protection devices|set;Earthing|set;Installation labour|day;Testing and commissioning|job'],
+ ['Computer and mobile phone repairs','Device brand and model;Reported fault;Diagnostic findings;Required replacement parts;Software services required;Warranty conditions','Replacement parts|piece;Diagnostic fee|job;Repair labour|hour;Software installation or recovery|job;Consumables|job;Delivery|trip'],
+ ['CCTV and networking','Number of cameras or network points;Building layout;Cable distances;Recording and storage requirements;Internet and power availability;Installation height;Security requirements','Cameras|piece;Recorder|unit;Hard drives|piece;Network cables|metre;Switches and routers|piece;Conduits|metre;Power supplies|piece;Mounting materials|set;Installation labour|point;Configuration and testing|job']
+]],
+['Creative and digital works',[
+ ['Graphic design','Type of design;Design dimensions;Number of concepts;Required file formats;Complexity;Number of revisions;Deadline;Whether printing is included','Design fee|job;Image licensing|licence;Special effects or additional artwork|job;Printing|job;Delivery|trip;Additional revisions|revision'],
+ ['Printing','Type of printed product;Quantity;Paper type and thickness;Dimensions;Colour requirements;Single- or double-sided printing;Finishing requirements','Paper|ream;Ink|set;Machine operation|hour;Setup|job;Design and typesetting|job;Lamination or binding|piece;Cutting and finishing|job;Packaging|pack;Delivery|trip'],
+ ['Website development','Website type;Number of pages;Required features;Design complexity;Domain and hosting requirements;Payment integration;Customer account functionality;Maintenance requirements','Planning|day;UI/UX design|day;Front-end development|day;Back-end development|day;Database setup|job;Domain registration|year;Hosting|year;Security configuration|job;Testing|day;Training and maintenance|month'],
+ ['Photography and videography','Type of event or project;Date and duration;Location;Number of photographers or videographers;Equipment requirements;Editing requirements;Number of final images or videos;Delivery format','Professional fees|day;Equipment|day;Transport|trip;Assistant fees|day;Editing|hour;Storage and delivery|job;Accommodation|night'],
+ ['Signage and branding','Sign dimensions;Material type;Design;Indoor or outdoor installation;Lighting requirements;Mounting method;Installation height','Design|job;Sign material|m²;Printing or fabrication|m²;Frame|piece;Lighting|set;Electrical work|job;Installation labour|day;Transport and access equipment|job']
+]],
+['Fashion, beauty and personal services',[
+ ['Fashion design and tailoring','Garment type;Customer measurements;Fabric type;Fabric quantity;Design complexity;Accessories;Number of outfits;Delivery deadline','Fabric|yard;Thread|reel;Zips and buttons|piece;Lining|yard;Decorative materials|set;Cutting and sewing labour|outfit;Embroidery|job;Fittings and alterations|job;Packaging|piece'],
+ ['Hairdressing and barbering','Service type;Number of customers;Hair length or styling requirements;Products required;Service duration','Labour|service;Hair products|piece;Extensions and other materials|pack;Equipment consumables|job;Travel expenses|trip'],
+ ['Makeup and beauty services','Type of service;Number of clients;Event location;Products required;Duration;Travel requirements','Makeup products|job;Consumables|job;Professional fee|client;Assistant fee|day;Transport|trip;Equipment and setup|job'],
+ ['Laundry and dry cleaning','Number of garments;Garment types;Washing method;Special stain treatment;Ironing requirements;Pickup and delivery requirements','Washing chemicals|kg;Water and electricity|load;Labour|hour;Packaging|piece;Special treatment|garment;Collection and delivery|trip']
+]],
+['Events, catering and entertainment',[
+ ['Catering','Number of guests;Menu;Portion size;Event duration;Serving style;Event location;Dietary requirements;Equipment requirements','Food ingredients|guest;Meat and fish|kg;Drinks|crate;Cooking fuel|cylinder;Labour|day;Plates and cutlery|set;Equipment rental|day;Transport|trip;Setup and cleanup|job'],
+ ['Event planning and decoration','Event type;Guest count;Venue;Theme and colours;Event duration;Decoration requirements;Equipment requirements','Planning fee|job;Venue|day;Decoration materials|set;Flowers|bunch;Furniture|piece;Lighting|set;Sound|set;Transport|trip;Setup and dismantling|job'],
+ ['Tent and chair rental','Number of guests;Number and size of tents;Chair and table quantities;Venue accessibility;Rental duration;Delivery and collection arrangements','Tent rental|tent;Chairs|chair;Tables|table;Tablecloths|piece;Setup labour|job;Transport|trip;Damage deposit|deposit'],
+ ['Cake making','Cake size;Number of tiers;Flavour;Design complexity;Ingredients;Decorative requirements;Delivery location','Flour and sugar|kg;Eggs and other ingredients|tray;Butter or oil|kg;Filling and icing|kg;Decorations|set;Packaging|box;Labour|hour;Delivery|trip']
+]],
+['Transport, logistics and equipment rental',[
+ ['Haulage and goods transportation','Pickup and destination;Distance;Type and weight of goods;Vehicle capacity;Loading and unloading requirements;Trip duration;Return journey;Road and access conditions','Fuel|litre;Driver\'s fee|trip;Vehicle hire|day;Loading and unloading|trip;Tolls and parking|trip;Maintenance allowance|trip;Insurance or special handling|job;Additional stops|stop'],
+ ['Moving services','Pickup and destination;Number of rooms or volume of belongings;Number of floors;Packing requirements;Vehicle size;Number of workers;Distance and access conditions','Packing materials|set;Labour|worker;Vehicle|trip;Fuel|litre;Loading and unloading|job;Furniture dismantling and assembly|job;Special handling|job;Insurance|job'],
+ ['Warehousing','Goods type;Quantity and volume;Storage duration;Handling frequency;Special temperature or security requirements;Loading and unloading requirements','Storage charges|pallet;Handling|job;Pallets and packaging|piece;Labour|day;Equipment|day;Insurance|month;Delivery and dispatch|trip'],
+ ['Heavy equipment rental','Equipment type;Capacity;Work location;Number of working hours or days;Operator requirement;Fuel arrangement;Transport to site;Maintenance responsibility','Equipment rental|day;Operator|day;Fuel|litre;Mobilisation and demobilisation|job;Maintenance|day;Transport|trip;Standby time|hour']
+]],
+['Agriculture and farming',[
+ ['Crop farming','Crop type;Farm size;Location;Planting season;Land condition;Seed variety;Planting density;Fertiliser and pesticide requirements;Expected production period','Land clearing|acre;Ploughing|acre;Seeds|kg;Fertiliser|bag;Approved crop protection products|litre;Labour|day;Irrigation|job;Harvesting|day;Packaging|bag;Transport to market|trip'],
+ ['Poultry farming','Number of birds;Broiler or layer production;Housing type;Feed programme;Water requirements;Veterinary plan;Production period','Chicks|chick;Housing|job;Feed|bag;Feeders and drinkers|set;Bedding|bag;Veterinary care|batch;Labour|month;Water and electricity|month;Transport|trip;Waste management|month'],
+ ['Fish farming','Fish species;Number of fingerlings;Pond or tank size;Water supply;Feeding programme;Expected production cycle;Harvesting method','Pond or tank construction|job;Fingerlings|piece;Feed|bag;Pumps and aeration|set;Water testing|test;Labour|month;Maintenance|month;Harvesting and transport|job'],
+ ['Irrigation','Farm area;Crop type;Water source;Elevation and terrain;Required flow rate;Irrigation method;Pumping requirements','Pumps|unit;Pipes|metre;Valves|piece;Filters|piece;Emitters or sprinklers|piece;Water storage|tank;Installation|day;Power supply|job;Testing and maintenance|job']
+]],
+['Cleaning, property and facility services',[
+ ['Residential and commercial cleaning','Property size;Number of rooms;Type of cleaning;Property condition;Number of cleaners;Duration;Frequency of service;Equipment requirements','Cleaning chemicals|litre;Detergents|kg;Consumables|job;Labour|day;Equipment|day;Transportation|trip;Waste disposal|trip;Special cleaning treatments|job'],
+ ['Pest control and fumigation','Property size;Pest type;Severity of infestation;Indoor or outdoor treatment;Treatment method;Safety and access requirements','Approved treatment products|litre;Protective equipment|set;Labour|day;Equipment|day;Transport|trip;Follow-up inspection|visit;Waste disposal|job'],
+ ['Property maintenance','Property type;Defects identified;Number of affected areas;Materials required;Repair urgency;Labour and equipment requirements','Replacement materials|job;Repair labour|day;Equipment hire|day;Transport|trip;Inspection|visit;Testing|job;Cleanup|job'],
+ ['Waste management','Waste type;Estimated volume or weight;Collection frequency;Collection location;Vehicle requirements;Disposal facility;Special handling requirements','Labour|day;Collection vehicle|trip;Fuel|litre;Bins and containers|piece;Disposal charges|tonne;Protective equipment|set;Transport|trip;Treatment|job']
+]],
+['Professional and business services',[
+ ['Accounting','Number of transactions, records and reporting periods','Professional hours|hour;Software|month;Review|hour','Regulated professional services must be handled by appropriately qualified or authorised professionals where required.'],
+ ['Auditing','Scope, records, sites and complexity','Staff hours|hour;Travel|trip;Testing|hour','Regulated professional services must be handled by appropriately qualified or authorised professionals where required.'],
+ ['Business consulting','Project objectives, scope and duration','Consultant hours|hour;Research|day;Travel|trip'],
+ ['Legal services','Nature of the matter, scope and complexity','Professional fees|hour;Filing fees|job;Approved disbursements|job','Regulated professional services must be handled by appropriately qualified or authorised professionals where required.'],
+ ['Training','Number of participants, topic and duration','Trainer fees|day;Venue|day;Materials|participant;Travel|trip'],
+ ['Market research','Target population, sample size and locations','Survey design|job;Fieldwork|day;Data analysis|job'],
+ ['Recruitment','Number and type of roles, hiring method','Advertising|job;Screening|candidate;Assessment|candidate;Professional fee|role'],
+ ['Translation','Language pair, word count, complexity and deadline','Translation|word;Editing|word;Formatting|page'],
+ ['Office supplies','Item list, quantities, specifications, delivery location','Product cost|item;Handling|job;Delivery|trip'],
+ ['Business plan preparation','Business type, research requirements and deliverables','Research|day;Writing|day;Financial modelling|day;Review|day']
+]],
+['Manufacturing, wholesale and supply',[
+ ['Manufacturing','Product specification;Production quantity;Raw material requirements;Production method;Labour hours;Machine capacity;Energy consumption;Packaging requirements;Quality control requirements','Raw materials|unit;Direct labour|hour;Machine operation|hour;Energy|kWh;Maintenance|job;Packaging|unit;Quality control|batch;Waste and scrap|batch;Storage and distribution|trip'],
+ ['Furniture production','Furniture type;Dimensions;Materials;Design and finish;Quantity;Installation requirements','Timber or boards|piece;Foam and fabric|metre;Screws and fittings|set;Glue|tin;Paint or varnish|litre;Workshop labour|day;Machine operation|hour;Delivery and installation|job'],
+ ['Product supply and wholesale','Product description;Quantity;Brand and specification;Supplier price;Delivery location;Delivery date;Storage requirements;Payment terms','Purchase cost|unit;Transportation|trip;Loading and unloading|trip;Storage|month;Packaging|pack;Insurance|job;Taxes and duties|job'],
+ ['Packaging and food processing','Product type;Production quantity;Ingredients or raw materials;Packaging specification;Production process;Quality and safety requirements;Storage and delivery requirements','Raw materials|kg;Packaging|piece;Labour|day;Machinery|hour;Energy|kWh;Quality control|batch;Storage|month;Waste|batch;Transport|trip']
+]],
+['Additional industries',[
+ ['Mining','Site preparation, equipment hire, maintenance and haulage'],
+ ['Telecommunications','Mast installation, fibre cabling and network maintenance'],
+ ['Healthcare','Medical equipment installation, facility maintenance and approved supply contracts'],
+ ['Education','School construction, classroom furniture and educational materials'],
+ ['Security','Alarm systems, access control and security equipment installation'],
+ ['Water and sanitation','Water treatment, drainage and sanitation facilities'],
+ ['Energy','Electrical infrastructure and renewable energy projects'],
+ ['Marine and fishing','Boat repairs, fishing equipment and cold storage'],
+ ['Printing and publishing','Books, newspapers, labels and commercial printing'],
+ ['Real estate','Property renovation, maintenance and management'],
+ ['Demolition','Structural assessment, dismantling, debris removal and disposal'],
+ ['Environmental services','Environmental assessments, remediation and waste treatment'],
+ ['Laboratory services','Testing, calibration and equipment maintenance'],
+ ['Hospitality','Hotel maintenance, restaurant fit-outs and accommodation services'],
+ ['Retail fit-outs','Shelving, counters, lighting and shop renovation'],
+ ['Other / custom job','Describe the work, then add your own line items']
+]]
+];
+const GENERIC_ITEMS='Materials|job;Labour|day;Equipment hire|day;Transport|trip;Permits or professional fees|job';
+
+
+const GROUPS={materials:'Materials',labour:'Labour',equipment:'Equipment',transport:'Transport',other:'Other costs'};
+
+let _cid=0;
+const CATALOGUE=CAT_SRC.map(([name,cats])=>({name,cats:cats.map(([cn,info,items,note])=>({
+  id:'c'+(++_cid),name:cn,
+  info:info.split(';'),
+  items:(items||GENERIC_ITEMS).split(';').map(s=>{const [n,u]=s.split('|');return{name:n,unit:u||'item'}}),
+  note:note||''
+}))}));
+const ALLCATS=CATALOGUE.flatMap(s=>s.cats);
+const findCat=id=>ALLCATS.find(c=>c.id===id);
+
+/* ---------- countries (ISO code : currency) ---------- */
+const COUNTRY_SRC='DZ:DZD,AO:AOA,BJ:XOF,BW:BWP,BF:XOF,BI:BIF,CV:CVE,CM:XAF,CF:XAF,TD:XAF,KM:KMF,CG:XAF,CD:CDF,CI:XOF,DJ:DJF,EG:EGP,GQ:XAF,ER:ERN,SZ:SZL,ET:ETB,GA:XAF,GM:GMD,GH:GHS,GN:GNF,GW:XOF,KE:KES,LS:LSL,LR:LRD,LY:LYD,MG:MGA,MW:MWK,ML:XOF,MR:MRU,MU:MUR,MA:MAD,MZ:MZN,NA:NAD,NE:XOF,NG:NGN,RW:RWF,ST:STN,SN:XOF,SC:SCR,SL:SLE,SO:SOS,ZA:ZAR,SS:SSP,SD:SDG,TZ:TZS,TG:XOF,TN:TND,UG:UGX,ZM:ZMW,ZW:ZWG,'+
+'AG:XCD,AR:ARS,BS:BSD,BB:BBD,BZ:BZD,BO:BOB,BR:BRL,CA:CAD,CL:CLP,CO:COP,CR:CRC,CU:CUP,DM:XCD,DO:DOP,EC:USD,SV:USD,GD:XCD,GT:GTQ,GY:GYD,HT:HTG,HN:HNL,JM:JMD,MX:MXN,NI:NIO,PA:PAB,PY:PYG,PE:PEN,PR:USD,KN:XCD,LC:XCD,VC:XCD,SR:SRD,TT:TTD,US:USD,UY:UYU,VE:VES,'+
+'AF:AFN,AM:AMD,AZ:AZN,BH:BHD,BD:BDT,BT:BTN,BN:BND,KH:KHR,CN:CNY,GE:GEL,HK:HKD,IN:INR,ID:IDR,IR:IRR,IQ:IQD,IL:ILS,JP:JPY,JO:JOD,KZ:KZT,KW:KWD,KG:KGS,LA:LAK,LB:LBP,MO:MOP,MY:MYR,MV:MVR,MN:MNT,MM:MMK,NP:NPR,KP:KPW,OM:OMR,PK:PKR,PS:ILS,PH:PHP,QA:QAR,SA:SAR,SG:SGD,KR:KRW,LK:LKR,SY:SYP,TW:TWD,TJ:TJS,TH:THB,TL:USD,TR:TRY,TM:TMT,AE:AED,UZ:UZS,VN:VND,YE:YER,'+
+'AL:ALL,AD:EUR,AT:EUR,BY:BYN,BE:EUR,BA:BAM,BG:EUR,HR:EUR,CY:EUR,CZ:CZK,DK:DKK,EE:EUR,FI:EUR,FR:EUR,DE:EUR,GR:EUR,HU:HUF,IS:ISK,IE:EUR,IT:EUR,XK:EUR,LV:EUR,LI:CHF,LT:EUR,LU:EUR,MT:EUR,MD:MDL,MC:EUR,ME:EUR,NL:EUR,MK:MKD,NO:NOK,PL:PLN,PT:EUR,RO:RON,RU:RUB,SM:EUR,RS:RSD,SK:EUR,SI:EUR,ES:EUR,SE:SEK,CH:CHF,UA:UAH,GB:GBP,'+
+'AU:AUD,FJ:FJD,KI:AUD,MH:USD,FM:USD,NR:AUD,NZ:NZD,PW:USD,PG:PGK,WS:WST,SB:SBD,TO:TOP,TV:AUD,VU:VUV';
+let _dnR=null,_dnC=null;
+try{_dnR=new Intl.DisplayNames(['en'],{type:'region'});_dnC=new Intl.DisplayNames(['en'],{type:'currency'})}catch(e){}
+function regionName(iso){let n=iso;try{n=_dnR?_dnR.of(iso):iso}catch(e){}return(n===iso&&iso==='XK')?'Kosovo':n}
+function curName(code){try{return _dnC?(_dnC.of(code)||code):code}catch(e){return code}}
+const flag=iso=>/^[A-Z]{2}$/.test(iso)?String.fromCodePoint(...[...iso].map(c=>127397+c.charCodeAt(0))):'';
+const COUNTRIES=COUNTRY_SRC.split(',').map(s=>{const [iso,cur]=s.split(':');return{iso,cur,name:regionName(iso)}}).sort((a,b)=>a.name.localeCompare(b.name));
+const countryOf=iso=>COUNTRIES.find(c=>c.iso===iso)||COUNTRIES.find(c=>c.iso==='GH');
+const ALL_CODES=[...new Set(COUNTRIES.map(c=>c.cur))];
+
+/* regions or states, where we have them. Other countries use a free-text field. */
+const REGIONS={
+ GH:['Greater Accra','Ashanti','Western','Western North','Central','Eastern','Volta','Oti','Northern','Savannah','North East','Upper East','Upper West','Bono','Bono East','Ahafo'],
+ NG:['Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno','Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT Abuja','Gombe','Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba','Yobe','Zamfara'],
+ ZA:['Eastern Cape','Free State','Gauteng','KwaZulu-Natal','Limpopo','Mpumalanga','North West','Northern Cape','Western Cape'],
+ US:['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','District of Columbia','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'],
+ GB:['England','Scotland','Wales','Northern Ireland'],
+ CA:['Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador','Northwest Territories','Nova Scotia','Nunavut','Ontario','Prince Edward Island','Quebec','Saskatchewan','Yukon'],
+ AU:['New South Wales','Victoria','Queensland','Western Australia','South Australia','Tasmania','Australian Capital Territory','Northern Territory'],
+ IN:['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Delhi','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal']
+};
+/* Starting tax labels and rates. These are only starting values: confirm with your tax authority. */
+const TAX={GH:['VAT',15],NG:['VAT',7.5],KE:['VAT',16],ZA:['VAT',15],GB:['VAT',20],DE:['VAT',19],FR:['VAT',20],IT:['VAT',22],ES:['VAT',21],NL:['VAT',21],IE:['VAT',23],IN:['GST',18],AU:['GST',10],NZ:['GST',15],CA:['GST',5],SG:['GST',9],AE:['VAT',5],EG:['VAT',14],TZ:['VAT',18],UG:['VAT',18],RW:['VAT',18],US:['Sales tax',0]};
+function taxesFor(iso){
+  const t=TAX[iso]||['Tax',0];
+  const list=[{name:t[0],rate:t[1],on:t[1]>0}];
+  if(iso==='GH'){list.push({name:'NHIL',rate:2.5,on:false},{name:'GETFund levy',rate:2.5,on:false})}
+  else list.push({name:'Other levy',rate:0,on:false});
+  return list;
+}
+
+/* ---------- helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=v=>{const n=parseFloat(v);return isFinite(n)?n:0};
+const uid=()=>Math.random().toString(36).slice(2,9);
+const today=()=>new Date().toISOString().slice(0,10);
+const sum=o=>Object.values(o).reduce((a,b)=>a+b,0);
+const clone=o=>JSON.parse(JSON.stringify(o));
+
+function classify(n){
+  n=n.toLowerCase();
+  if(/rental|hire|scaffolding|machine operation|machinery|access equipment|^equipment|equipment$/.test(n))return'equipment';
+  if(/transport|delivery|towing|^fuel|haul|tolls|collection|travel|dispatch|vehicle|trip/.test(n))return'transport';
+  if(/permit|insurance|disposal|accommodation|packaging|deposit|waste|tax|licen|domain|hosting|software|storage|bins/.test(n))return'other';
+  if(/labour|fee|operator|driver|assistant|trainer|consultant|design|development|planning|translation|editing|research|writing|hours|installation|fabrication|cutting|sewing|embroidery|alterations|testing|commissioning|inspection|handling|setup|drilling|mobilisation|preparation|repair|review|analysis|fieldwork|screening|assessment|configuration|modelling|survey|cleanup|ploughing|harvesting|clearing|excavation/.test(n))return'labour';
+  return'materials';
+}
+
+/* ---------- currency ----------
+   S.r holds units of each currency per 1 US dollar (the format live rate services use).
+   All prices are typed in the home currency S.base. Anything else is converted. */
+const SAMPLE_PER_USD={USD:1,GHS:11,EUR:.86,GBP:.74,NGN:1470,XOF:565,XAF:565,CNY:7.1,KES:129,ZAR:18,INR:85,CAD:1.37,AUD:1.52,JPY:150,AED:3.6725,EGP:50,TZS:2600,UGX:3650,RWF:1400,ZMW:24,MAD:9.3,BRL:5.5,MXN:19,SGD:1.3,CHF:.8};
+function fmt(v,code){
+  try{return new Intl.NumberFormat(undefined,{style:'currency',currency:code}).format(v)}
+  catch(e){return code+' '+v.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+}
+const hasRate=c=>!!S.r[c];
+/* home-currency units per 1 unit of code, with the safety margin added for foreign quotes */
+function basePer(code){
+  if(code===S.base)return 1;
+  if(!hasRate(code)||!hasRate(S.base))return 1;
+  return S.r[S.base]/S.r[code]*(1+num(S.margin)/100);
+}
+function money(v,code=S.cur){return fmt(v/basePer(code),code)}
+const baseMoney=v=>fmt(v,S.base);
+function convert(amount,from,to){return(hasRate(from)&&hasRate(to))?amount*S.r[to]/S.r[from]:amount}
+function setCurrencyChip(){const c=countryOf(S.country);$('#curChip').textContent=`${flag(c.iso)} ${S.base}${S.cur!==S.base?' → '+S.cur:''}`}
+
+/* ---------- state ---------- */
+const newEstimate=()=>({
+  ref:`EST-${today().replace(/-/g,'')}-${String(S.seq).padStart(3,'0')}`,
+  savedId:null,catId:'',country:S.country,base:S.base,
+  info:{customer:'',phone:'',email:'',region:(REGIONS[S.country]||[''])[0],district:'',town:'',address:'',desc:'',date:today(),start:'',end:''},
+  lines:[],overhead:10,contingency:5,profit:15,
+  taxes:taxesFor(S.country),
+  cond:{included:'',excluded:'',payment:'50% deposit before work starts, balance on completion.',validity:30,warranty:'',change:'Work outside the agreed scope is quoted and approved before it starts.'}
+});
+function guessCountry(){
+  try{const m=(navigator.language||'').match(/-([A-Za-z]{2})$/);if(m&&COUNTRIES.some(c=>c.iso===m[1].toUpperCase()))return m[1].toUpperCase()}catch(e){}
+  return'GH';
+}
+const S={tab:'estimate',country:'GH',countrySet:false,base:'GHS',cur:'GHS',margin:0,r:{...SAMPLE_PER_USD},ratesDate:'',watch:['USD','EUR','GBP'],prices:[],saved:[],seq:1,est:null};
+S.country=guessCountry();S.base=countryOf(S.country).cur;S.cur=S.base;
+S.est=newEstimate();
+
+function hasWork(e){return e.lines.some(l=>num(l.qty)>0||num(l.rate)>0)}
+function snapshotSave(){
+  const E=S.est;const snap={id:E.savedId||uid(),total:calc().final,est:clone(E)};
+  snap.est.savedId=snap.id;E.savedId=snap.id;
+  const i=S.saved.findIndex(s=>s.id===snap.id);
+  if(i>=0)S.saved[i]=snap;else S.saved.push(snap);
+}
+function setCountry(iso,opts={}){
+  const old=S.base;
+  if(!opts.keepEstimate&&hasWork(S.est))snapshotSave();
+  S.country=iso;S.countrySet=true;S.base=countryOf(iso).cur;S.cur=S.base;
+  if(!S.watch.includes('USD')&&S.base!=='USD')S.watch.unshift('USD');
+  if(!opts.keepEstimate){S.est=newEstimate()}
+  persist();setCurrencyChip();
+  return old!==S.base;
+}
+
+/* ---------- persistence (platform storage with browser fallback) ---------- */
+const STORAGE_KEY='we-state';
+let _pt;
+function stateForStorage(){
+  return JSON.stringify({country:S.country,countrySet:S.countrySet,base:S.base,cur:S.cur,margin:S.margin,r:S.r,ratesDate:S.ratesDate,watch:S.watch,prices:S.prices,saved:S.saved,seq:S.seq,est:S.est});
+}
+function persist(){
+  clearTimeout(_pt);
+  _pt=setTimeout(async()=>{
+    const payload=stateForStorage();
+    // Use the host-provided storage when available; fall back to browser storage.
+    try{
+      if(window.storage&&typeof window.storage.set==='function'){
+        await window.storage.set(STORAGE_KEY,payload,false);
+        return;
+      }
+    }catch(e){ /* Try localStorage below. */ }
+    try{ window.localStorage.setItem(STORAGE_KEY,payload); }catch(e){ /* Storage may be blocked for file:// pages. */ }
+  },600);
+}
+async function loadState(){
+  let raw=null;
+  try{
+    if(window.storage&&typeof window.storage.get==='function'){
+      const r=await window.storage.get(STORAGE_KEY);
+      if(r&&typeof r.value==='string'&&r.value)raw=r.value;
+    }
+  }catch(e){ /* Try browser storage below. */ }
+  if(!raw){
+    try{ raw=window.localStorage.getItem(STORAGE_KEY); }catch(e){ /* Storage may be blocked for file:// pages. */ }
+  }
+  if(!raw)return;
+  try{
+    const d=JSON.parse(raw);
+    ['country','countrySet','base','cur','margin','r','ratesDate','watch','prices','saved','seq'].forEach(k=>{if(d[k]!==undefined)S[k]=d[k]});
+    if(d.est){const b=newEstimate();S.est=Object.assign(b,d.est,{info:Object.assign(b.info,d.est.info||{}),cond:Object.assign(b.cond,d.est.cond||{})});}
+  }catch(e){ /* Ignore corrupted or outdated saved state and start fresh. */ }
+}
+
+/* ---------- price book ---------- */
+function lookupPrice(name,unit){
+  const n=name.trim().toLowerCase(); if(!n)return null;
+  let m=S.prices.filter(p=>p.cur===S.base&&p.name.toLowerCase()===n);
+  if(unit)m=m.filter(p=>p.unit.toLowerCase()===unit.toLowerCase());
+  if(!m.length)return null;
+  const reg=S.est.info.region;
+  m.sort((a,b)=>((b.region===reg)-(a.region===reg))||b.date.localeCompare(a.date));
+  return m[0];
+}
+function refreshNameList(){
+  const names=new Set();
+  ALLCATS.forEach(c=>c.items.forEach(i=>names.add(i.name)));
+  S.prices.forEach(p=>names.add(p.name));
+  $('#namelist').innerHTML=[...names].sort().map(n=>`<option value="${esc(n)}">`).join('');
+}
+
+/* ---------- calculation ---------- */
+function calc(){
+  const e=S.est,g={materials:0,labour:0,equipment:0,transport:0,other:0};
+  e.lines.forEach(l=>{l.total=num(l.qty)*(1+num(l.waste)/100)*num(l.rate);g[l.group]=(g[l.group]||0)+l.total});
+  const direct=sum(g),oh=direct*num(e.overhead)/100,cont=direct*num(e.contingency)/100;
+  const cost=direct+oh+cont,profit=cost*num(e.profit)/100,sub=cost+profit;
+  const taxes=e.taxes.map(t=>({name:t.name,rate:t.rate,on:t.on,amt:t.on?sub*num(t.rate)/100:0}));
+  const taxTotal=taxes.reduce((a,t)=>a+t.amt,0);
+  return{g,direct,oh,cont,cost,profit,sub,taxes,taxTotal,final:sub+taxTotal};
+}
+function updateTotals(){
+  if(S.tab!=='estimate')return;
+  const c=calc(),set=(id,t)=>{const el=document.getElementById(id);if(el)el.textContent=t};
+  S.est.lines.forEach(l=>set('lt-'+l.id,baseMoney(l.total)));
+  Object.keys(GROUPS).forEach(k=>set('c-'+k,money(c.g[k])));
+  set('c-direct',money(c.direct));set('c-oh',money(c.oh));set('c-cont',money(c.cont));
+  set('c-cost',money(c.cost));set('c-profit',money(c.profit));set('c-sub',money(c.sub));
+  c.taxes.forEach((t,i)=>set('tx-'+i,money(t.amt)));
+  set('c-final',money(c.final));
+  const foreign=S.cur!==S.base;
+  set('c-final-base',foreign?`${baseMoney(c.final)} in ${S.base}`:'');
+  set('c-rate',foreign?`Rate used: 1 ${S.cur} = ${baseMoney(basePer(S.cur))}`:'');
+  persist();
+}
+
+/* ---------- Estimate tab ---------- */
+function fld(label,key,val,type='text',cls=''){
+  return `<div class="${cls}"><label>${label}<input type="${type}" data-k="${key}" value="${esc(val)}"></label></div>`;
+}
+function regionField(key,val){
+  const list=REGIONS[S.country];
+  if(list)return `<div><label>Region<select data-k="${key}">${list.map(r=>`<option ${r===val?'selected':''}>${esc(r)}</option>`).join('')}</select></label></div>`;
+  return fld('Region, state or province',key,val);
+}
+function countryOptions(sel){return COUNTRIES.map(c=>`<option value="${c.iso}" ${c.iso===sel?'selected':''}>${flag(c.iso)} ${esc(c.name)} (${c.cur})</option>`).join('')}
+function renderEstimate(){
+  const e=S.est,i=e.info,k=e.cond,ctry=countryOf(S.country);
+  const catOpts=CATALOGUE.map(s=>`<optgroup label="${esc(s.name)}">${s.cats.map(c=>`<option value="${c.id}" ${c.id===e.catId?'selected':''}>${esc(c.name)}</option>`).join('')}</optgroup>`).join('');
+  const taxRows=e.taxes.map((t,n)=>`<div class="row"><label style="display:flex;align-items:center;color:var(--ink);font-size:15px"><input type="checkbox" data-tx="on" data-i="${n}" ${t.on?'checked':''}><input data-tx="name" data-i="${n}" value="${esc(t.name)}" style="width:120px;margin:0 8px 0 0" aria-label="Tax name"><input class="pct" type="number" step="any" inputmode="decimal" data-tx="rate" data-i="${n}" value="${esc(t.rate)}" style="margin:0 4px">%</label><b id="tx-${n}"></b></div>`).join('');
+  const welcome=S.countrySet?'':`<div class="blk"><h2>Where do you work?</h2>
+    <p class="hint">This sets your home currency, regions and tax label. You can change it later in the Currency tab.</p>
+    <label>Country<select id="firstCountry">${countryOptions(S.country)}</select></label>
+    <div class="actions"><button class="btn" data-act="confirmCountry">Use ${esc(ctry.name)}</button></div></div>`;
+  $('#view').innerHTML=`
+  ${welcome}
+  <div class="blk">
+    <h2>Type of work</h2>
+    <label>Choose a category
+      <select id="catSel"><option value="">Select the type of work…</option>${catOpts}</select>
+    </label>
+    <div id="catInfo"></div>
+  </div>
+
+  <div class="blk">
+    <h2>Customer and project</h2>
+    <p class="hint">Estimate reference: <b>${esc(e.ref)}</b><br>Country: ${flag(ctry.iso)} ${esc(ctry.name)}. Prices are in ${esc(S.base)} (${esc(curName(S.base))}).</p>
+    <div class="grid2">
+      ${fld('Customer name','info.customer',i.customer,'text','full')}
+      ${fld('Phone number','info.phone',i.phone,'tel')}
+      ${fld('Email','info.email',i.email,'email')}
+      ${regionField('info.region',i.region)}
+      ${fld('District or municipality','info.district',i.district)}
+      ${fld('Town or community','info.town',i.town)}
+      ${fld('Project address','info.address',i.address)}
+      <div class="full"><label>Project description<textarea data-k="info.desc">${esc(i.desc)}</textarea></label></div>
+      ${fld('Date of estimate','info.date',i.date,'date')}
+      ${fld('Expected start','info.start',i.start,'date')}
+      ${fld('Expected completion','info.end',i.end,'date')}
+    </div>
+  </div>
+
+  <div class="blk">
+    <h2>Measurements, materials and labour</h2>
+    <p class="hint">Quantity × rate = line total. Rates are in ${esc(S.base)}. Type a name from your price book to fill the unit and rate automatically.</p>
+    <div id="lines"></div>
+    <div class="actions"><button class="btn alt" data-act="addLine">Add line item</button></div>
+  </div>
+
+  <div class="blk">
+    <h2>Cost summary</h2>
+    <p class="hint">Shown in ${esc(S.cur)}. Change the quote currency in the Currency tab.</p>
+    ${Object.entries(GROUPS).map(([key,lab])=>`<div class="row"><span>${lab}</span><b id="c-${key}"></b></div>`).join('')}
+    <div class="row sub"><span>Direct costs</span><b id="c-direct"></b></div>
+    <div class="row"><span>Overheads<input class="pct" type="number" step="any" inputmode="decimal" data-k="overhead" value="${esc(e.overhead)}">%</span><b id="c-oh"></b></div>
+    <div class="row"><span>Contingency<input class="pct" type="number" step="any" inputmode="decimal" data-k="contingency" value="${esc(e.contingency)}">%</span><b id="c-cont"></b></div>
+    <div class="row sub"><span>Total estimated cost</span><b id="c-cost"></b></div>
+    <div class="row"><span>Profit<input class="pct" type="number" step="any" inputmode="decimal" data-k="profit" value="${esc(e.profit)}">%</span><b id="c-profit"></b></div>
+    <div class="row sub"><span>Price before taxes</span><b id="c-sub"></b></div>
+    ${taxRows}
+    <p class="hint">Tax lines are editable and each one is applied to the price before taxes. The starting rate is only a default for ${esc(ctry.name)}. Confirm current rates with your tax authority before issuing a quote.</p>
+    <div class="total">
+      <small>Final quoted price</small>
+      <div class="big" id="c-final"></div>
+      <small id="c-final-base"></small>
+      <small id="c-rate"></small>
+    </div>
+  </div>
+
+  <div class="blk">
+    <h2>Quotation conditions</h2>
+    <div class="grid2">
+      <div class="full"><label>Work included<textarea data-k="cond.included">${esc(k.included)}</textarea></label></div>
+      <div class="full"><label>Work excluded<textarea data-k="cond.excluded">${esc(k.excluded)}</textarea></label></div>
+      <div class="full"><label>Payment terms<textarea data-k="cond.payment">${esc(k.payment)}</textarea></label></div>
+      ${fld('Quotation valid for (days)','cond.validity',k.validity,'number')}
+      ${fld('Warranty, if any','cond.warranty',k.warranty)}
+      <div class="full"><label>Change-order conditions<textarea data-k="cond.change">${esc(k.change)}</textarea></label></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn" data-act="saveEst">Save estimate</button>
+    <button class="btn alt" data-act="preview">Preview quote</button>
+    <button class="btn alt" data-act="print">Print</button>
+    <button class="btn alt" data-act="pdf">Save as PDF</button>
+    <button class="btn alt" data-act="copy">Copy as text</button>
+    <button class="btn danger" data-act="newEst">Start a new estimate</button>
+  </div>
+  <p class="hint">Measured quantities matter more than assumed ones. Jobs that need engineering calculations or regulated approvals should be reviewed by a qualified professional.</p>`;
+  renderLines();renderCatInfo();updateTotals();
+}
+function renderCatInfo(){
+  const el=$('#catInfo');if(!el)return;
+  const c=findCat(S.est.catId);
+  el.innerHTML=c?`<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:600">Information to collect for ${esc(c.name.toLowerCase())}</summary><ul style="padding-left:20px;margin:6px 0">${c.info.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details>${c.note?`<p class="note">${esc(c.note)}</p>`:''}`:'';
+}
+function lineHTML(l){
+  return `<div class="ln" data-id="${l.id}" data-g="${l.group}">
+    <div class="ln-top"><input data-f="name" list="namelist" placeholder="Item or service" value="${esc(l.name)}" aria-label="Item name"><button class="x" data-act="rm" aria-label="Remove line">×</button></div>
+    <div class="ln-grid">
+      <label>Quantity<input type="number" step="any" inputmode="decimal" data-f="qty" value="${esc(l.qty)}"></label>
+      <label>Unit<input data-f="unit" value="${esc(l.unit)}"></label>
+      <label>Rate (${esc(S.base)})<input type="number" step="any" inputmode="decimal" data-f="rate" value="${esc(l.rate)}"></label>
+      <label>Wastage %<input type="number" step="any" inputmode="decimal" data-f="waste" value="${esc(l.waste)}"></label>
+    </div>
+    <div class="ln-foot">
+      <select data-f="group" aria-label="Cost type">${Object.entries(GROUPS).map(([k,v])=>`<option value="${k}" ${k===l.group?'selected':''}>${v}</option>`).join('')}</select>
+      <button class="btn alt sm" data-act="saveRate">Save rate</button>
+      <b class="lt" id="lt-${l.id}"></b>
+    </div></div>`;
+}
+function renderLines(){
+  const el=$('#lines');if(!el)return;
+  el.innerHTML=S.est.lines.length?S.est.lines.map(lineHTML).join(''):'<p class="empty">No line items yet. Pick a type of work above, or add a line item.</p>';
+}
+function blankLine(name='',unit='',group){return{id:uid(),name,unit,group:group||(name?classify(name):'materials'),qty:'',waste:'',rate:''}}
+function applyCategory(id){
+  const e=S.est;e.catId=id;const c=findCat(id);
+  const keep=e.lines.filter(l=>num(l.qty)>0||num(l.rate)>0);
+  const have=new Set(keep.map(l=>l.name.toLowerCase()));
+  const fresh=c?c.items.filter(i=>!have.has(i.name.toLowerCase())).map(i=>{
+    const l=blankLine(i.name,i.unit);const p=lookupPrice(i.name,i.unit);if(p)l.rate=p.price;return l;
+  }):[];
+  e.lines=[...keep,...fresh];
+  renderLines();renderCatInfo();updateTotals();
+}
+
+/* ---------- quote / text output ---------- */
+function buildQuote(){
+  const e=S.est,c=calc(),code=S.cur,m=v=>money(v,code),i=e.info,k=e.cond;
+  const rows=e.lines.filter(l=>num(l.qty)>0).map(l=>{
+    const eff=num(l.rate)*(1+num(l.waste)/100);
+    return `<tr><td>${esc(l.name)}</td><td class="r">${esc(l.qty)} ${esc(l.unit)}</td><td class="r">${m(eff)}</td><td class="r">${m(l.total)}</td></tr>`;
+  }).join('');
+  const markup=c.oh+c.cont+c.profit;
+  const valid=num(k.validity)?`Valid for ${esc(k.validity)} days from ${esc(i.date)}.`:'';
+  const cat=findCat(e.catId);
+  const sec=(t,v)=>v?`<p><b>${t}:</b> ${esc(v)}</p>`:'';
+  return `<div class="q">
+    <h1>Quotation</h1>
+    <p>Ref ${esc(e.ref)} &nbsp;|&nbsp; Date ${esc(i.date)} &nbsp;|&nbsp; Currency ${esc(code)}</p>
+    <p><b>Customer:</b> ${esc(i.customer)||'-'} ${i.phone?'&nbsp;|&nbsp; '+esc(i.phone):''} ${i.email?'&nbsp;|&nbsp; '+esc(i.email):''}</p>
+    <p><b>Project location:</b> ${esc([i.address,i.town,i.district,i.region,countryOf(e.country||S.country).name].filter(Boolean).join(', '))}</p>
+    ${cat?`<p><b>Type of work:</b> ${esc(cat.name)}</p>`:''}
+    ${sec('Description',i.desc)}
+    <table><thead><tr><th>Item</th><th class="r">Quantity</th><th class="r">Unit rate</th><th class="r">Amount</th></tr></thead><tbody>
+      ${rows||'<tr><td colspan="4">No priced items</td></tr>'}
+      <tr><td colspan="3">Overheads, contingency and margin</td><td class="r">${m(markup)}</td></tr>
+      <tr><td colspan="3"><b>Subtotal</b></td><td class="r"><b>${m(c.sub)}</b></td></tr>
+      ${c.taxes.filter(t=>t.on).map(t=>`<tr><td colspan="3">${esc(t.name)} (${esc(t.rate)}%)</td><td class="r">${m(t.amt)}</td></tr>`).join('')}
+      <tr class="tot"><td colspan="3">Total</td><td class="r">${m(c.final)}</td></tr>
+    </tbody></table>
+    ${code!==S.base?`<p>Equivalent: ${baseMoney(c.final)}. Rate used: 1 ${esc(code)} = ${baseMoney(basePer(code))}${S.ratesDate?' (rates set '+esc(S.ratesDate)+')':''}.</p>`:''}
+    ${sec('Work included',k.included)}${sec('Work excluded',k.excluded)}${sec('Payment terms',k.payment)}${sec('Warranty',k.warranty)}${sec('Changes',k.change)}
+    <p>${valid}</p>
+    <p style="margin-top:30px">Customer approval: ____________________ &nbsp;&nbsp; Business approval: ____________________</p>
+  </div>`;
+}
+function buildText(){
+  const e=S.est,c=calc(),code=S.cur,m=v=>money(v,code),i=e.info;
+  const L=[`QUOTATION ${e.ref}`,`Date: ${i.date}`,`Customer: ${i.customer||'-'}`,`Location: ${[i.address,i.town,i.district,i.region,countryOf(e.country||S.country).name].filter(Boolean).join(', ')}`,''];
+  e.lines.filter(l=>num(l.qty)>0).forEach(l=>L.push(`${l.name}: ${l.qty} ${l.unit} x ${m(num(l.rate)*(1+num(l.waste)/100))} = ${m(l.total)}`));
+  L.push('',`Subtotal: ${m(c.sub)}`);
+  c.taxes.filter(t=>t.on).forEach(t=>L.push(`${t.name} (${t.rate}%): ${m(t.amt)}`));
+  L.push(`TOTAL: ${m(c.final)}`);
+  if(e.cond.payment)L.push('',`Payment: ${e.cond.payment}`);
+  if(num(e.cond.validity))L.push(`Valid for ${e.cond.validity} days.`);
+  return L.join('\n');
+}
+function copyText(t){
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>toast('Quote copied')).catch(()=>fallbackCopy(t))}else fallbackCopy(t);
+}
+function fallbackCopy(t){
+  const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();
+  try{document.execCommand('copy');toast('Quote copied')}catch(e){toast('Copy is not available here')}
+  a.remove();
+}
+
+/* ---------- Catalogue tab ---------- */
+function renderCatalogue(){
+  $('#view').innerHTML=`<div class="blk"><h2>Work catalogue</h2>
+    <p class="hint">${ALLCATS.length} types of work across ${CATALOGUE.length} sectors. Each lists what to collect and which items to price. Units are metric. You can rename or change any unit on an estimate line.</p>
+    <input id="catq" type="search" placeholder="Search, for example roofing, solar or catering"></div><div id="catlist"></div>`;
+  drawCatList('');
+}
+function drawCatList(q){
+  q=q.trim().toLowerCase();
+  const html=CATALOGUE.map(s=>{
+    const cats=s.cats.filter(c=>!q||(c.name+' '+c.info.join(' ')+' '+c.items.map(i=>i.name).join(' ')).toLowerCase().includes(q));
+    if(!cats.length)return'';
+    return `<details class="sec" ${q?'open':''}><summary>${esc(s.name)}<span class="count">${cats.length}</span></summary>${cats.map(c=>`
+      <details class="cat"><summary>${esc(c.name)}</summary>
+        <h4>Information to collect</h4><ul>${c.info.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+        <h4>Items to estimate</h4><div class="chips">${c.items.map(i=>`<span class="chip">${esc(i.name)} (${esc(i.unit)})</span>`).join('')}</div>
+        ${c.note?`<p class="note">${esc(c.note)}</p>`:''}
+        <button class="btn" data-act="start" data-cat="${c.id}">Start estimate</button>
+      </details>`).join('')}</details>`;
+  }).join('');
+  $('#catlist').innerHTML=html||'<p class="empty">Nothing matches that search. Try a shorter word.</p>';
+}
+
+/* ---------- Prices tab ---------- */
+function renderPrices(){
+  const list=REGIONS[S.country];
+  const regionInput=list
+    ?`<select id="pb-region">${['All regions',...list].map(r=>`<option>${esc(r)}</option>`).join('')}</select>`
+    :`<input id="pb-region" value="All regions">`;
+  $('#view').innerHTML=`<div class="blk"><h2>Price book</h2>
+    <p class="hint">Record current supplier and contractor prices in ${esc(S.base)}. Estimates use these to fill rates, so update them when a supplier changes a price. Prices saved in another currency are kept but only used when you work in that currency.</p>
+    <div class="grid2">
+      <div class="full"><label>Item or service<input id="pb-name" list="namelist" placeholder="For example Cement"></label></div>
+      <div><label>Unit<input id="pb-unit" placeholder="bag"></label></div>
+      <div><label>Price (${esc(S.base)})<input id="pb-price" type="number" step="any" inputmode="decimal"></label></div>
+      <div><label>Region${regionInput}</label></div>
+      <div><label>Supplier or contractor<input id="pb-sup"></label></div>
+    </div>
+    <div class="actions"><button class="btn" data-act="pbAdd">Add to price book</button></div></div>
+    <div class="blk"><h2>Saved prices</h2><div id="pblist"></div></div>`;
+  drawPrices();
+}
+function drawPrices(){
+  const el=$('#pblist');if(!el)return;
+  if(!S.prices.length){el.innerHTML='<p class="empty">No prices yet. Add your first one above, or use Save rate on an estimate line.</p>';return}
+  const sorted=[...S.prices].sort((a,b)=>(b.cur===S.base)-(a.cur===S.base)||a.name.localeCompare(b.name));
+  el.innerHTML=sorted.map(p=>{
+    const age=Math.floor((Date.now()-new Date(p.date).getTime())/864e5);
+    const own=p.cur===S.base;
+    const shown=fmt(p.price,p.cur)+(S.cur!==p.cur&&hasRate(p.cur)&&hasRate(S.cur)?` (${fmt(convert(p.price,p.cur,S.cur),S.cur)})`:'');
+    return `<div class="item"><div><b>${esc(p.name)}</b> per ${esc(p.unit)}${age>30?'<span class="tag">verify price</span>':''}${own?'':'<span class="tag">'+esc(p.cur)+'</span>'}</div>
+    <div class="p">${shown}</div>
+    <div class="meta">${esc(p.region)}${p.supplier?' · '+esc(p.supplier):''} · verified ${esc(p.date)}</div>
+    <label style="display:flex;align-items:center;gap:8px">New price <input type="number" step="any" inputmode="decimal" data-pb="price" data-id="${p.id}" style="width:120px;margin:0" placeholder="${esc(p.cur)}"></label>
+    <button class="btn danger sm" data-act="pbDel" data-id="${p.id}">Delete</button></div>`;
+  }).join('');
+}
+function upsertPrice({name,unit,price,region,supplier}){
+  const f=S.prices.find(p=>p.cur===S.base&&p.name.toLowerCase()===name.toLowerCase()&&p.unit.toLowerCase()===unit.toLowerCase()&&p.region===region);
+  if(f){f.price=price;f.date=today();if(supplier)f.supplier=supplier}
+  else S.prices.push({id:uid(),name,unit,price,cur:S.base,region,supplier:supplier||'',date:today()});
+  refreshNameList();persist();
+}
+
+/* ---------- Currency tab ---------- */
+function shownCodes(){return[...new Set([S.base,...S.watch.filter(c=>c!==S.base)])]}
+function renderCurrency(){
+  const codes=shownCodes(),ctry=countryOf(S.country);
+  const chips=codes.map(c=>`<button class="chip ${c===S.cur?'on':''}" data-act="setcur" data-code="${c}" aria-pressed="${c===S.cur}">${c}</button>`).join('');
+  const rateRows=codes.filter(c=>c!==S.base).map(c=>{
+    const v=hasRate(c)&&hasRate(S.base)?+(S.r[S.base]/S.r[c]).toPrecision(6):'';
+    return `<div class="rate-row">
+    <div class="nm"><b>${c}</b><small>${esc(curName(c))}</small></div>
+    <div class="eq">1 ${c} = <input type="number" step="any" inputmode="decimal" data-rate="${c}" value="${v}" placeholder="rate" aria-label="${esc(S.base)} per 1 ${c}"> ${esc(S.base)}</div>
+    <button class="x" data-act="rmcur" data-code="${c}" aria-label="Remove ${c}">×</button></div>`;
+  }).join('');
+  const opts=sel=>codes.map(c=>`<option ${c===sel?'selected':''}>${c}</option>`).join('');
+  const addOpts=[...new Set([...ALL_CODES,...Object.keys(S.r)])].filter(c=>!codes.includes(c)).sort().map(c=>`<option value="${c}">${c} · ${esc(curName(c))}</option>`).join('');
+  const missing=codes.filter(c=>!hasRate(c));
+  $('#view').innerHTML=`
+  <div class="blk"><h2>Country and home currency</h2>
+    <label>Country<select id="countrySel">${countryOptions(S.country)}</select></label>
+    <p class="hint">Home currency: <b>${esc(S.base)}</b> (${esc(curName(S.base))}). You enter all prices in this currency. Changing country saves your current estimate and starts a new one.</p>
+    ${S.base!=='USD'?`<div style="max-width:260px"><label>1 USD = (${esc(S.base)})<input type="number" step="any" inputmode="decimal" data-rate="__base" value="${hasRate(S.base)?S.r[S.base]:''}" placeholder="rate"></label></div>`:''}
+  </div>
+
+  <div class="blk"><h2>Quote currency</h2>
+    <p class="hint">Totals, summaries and printed quotes are shown in the currency you pick here.</p>
+    <div class="chips">${chips}</div>
+    <p class="hint">Now showing: <b>${esc(S.cur)}</b>${S.cur!==S.base?` at 1 ${esc(S.cur)} = ${baseMoney(basePer(S.cur))}`:''}</p>
+  </div>
+
+  <div class="blk"><h2>Exchange rates</h2>
+    <p class="note ${missing.length?'warn':''}">${missing.length?`No rate yet for ${esc(missing.join(', '))}. Press Fetch live rates or type one in.`:(S.ratesDate?`Rates last updated ${esc(S.ratesDate)}.`:'These are sample rates, not live ones. Fetch live rates or update them before you quote in a foreign currency.')}</p>
+    ${rateRows||'<p class="hint">Add a currency below to see its rate against '+esc(S.base)+'.</p>'}
+    <div class="grid2" style="margin-top:12px">
+      <div><label>Safety margin on foreign quotes (%)<input type="number" step="any" inputmode="decimal" data-set="margin" value="${esc(S.margin)}"></label></div>
+      <div><label>Rates last updated<input type="date" data-set="ratesDate" value="${esc(S.ratesDate)}"></label></div>
+    </div>
+    <p class="hint">The margin raises the rate used in quotes to cover bank or bureau spreads and rate movement. It does not affect the converter below.</p>
+    <div class="actions"><button class="btn" data-act="fetch">Fetch live rates</button><button class="btn alt" data-act="resetRates">Reset to sample rates</button></div>
+  </div>
+
+  <div class="blk"><h2>Converter</h2>
+    <div class="grid3">
+      <div><label>Amount<input id="cv-amt" type="number" step="any" inputmode="decimal" value="100"></label></div>
+      <div><label>From<select id="cv-from">${opts(S.base)}</select></label></div>
+      <div><label>To<select id="cv-to">${opts(codes.find(c=>c!==S.base)||S.base)}</select></label></div>
+    </div>
+    <div class="conv-out" id="cv-out"></div><p class="hint" id="cv-rate"></p>
+    <button class="btn alt sm" data-act="swap">Swap</button>
+  </div>
+
+  <div class="blk"><h2>Add a currency</h2>
+    <label>Currency<select id="nc-code"><option value="">Choose a currency…</option>${addOpts}</select></label>
+    <div style="margin-top:8px"><label>Your own rate, if you have one (${esc(S.base)} per 1 unit)<input id="nc-rate" type="number" step="any" inputmode="decimal"></label></div>
+    <div class="actions"><button class="btn" data-act="addcur">Add currency</button></div>
+  </div>`;
+  runConv();
+}
+function runConv(){
+  const a=$('#cv-amt');if(!a)return;
+  const from=$('#cv-from').value,to=$('#cv-to').value;
+  const amt=num(a.value),r=convert(amt,from,to);
+  const f=v=>v.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:v<10?4:2});
+  const ok=hasRate(from)&&hasRate(to)||from===to;
+  $('#cv-out').textContent=ok?`${f(amt)} ${from} = ${f(r)} ${to}`:'Rate needed';
+  $('#cv-rate').textContent=ok?`1 ${from} = ${convert(1,from,to).toLocaleString(undefined,{maximumFractionDigits:6})} ${to}`:'Fetch live rates or enter a rate for the currencies you picked.';
+}
+async function fetchRates(){
+  toast('Fetching rates…');
+  try{
+    const r=await fetch('https://open.er-api.com/v6/latest/USD');
+    const d=await r.json();
+    if(d.result!=='success')throw new Error('bad');
+    let n=0;
+    Object.keys(d.rates).forEach(c=>{if(d.rates[c]>0){S.r[c]=d.rates[c];n++}});
+    S.ratesDate=today();persist();renderCurrency();toast(`Updated ${n} currencies`);
+  }catch(e){toast('Could not reach the rate service. Enter rates by hand.')}
+}
+
+/* ---------- Saved tab ---------- */
+function renderSaved(){
+  const list=S.saved.length?[...S.saved].reverse().map(s=>{
+    const cat=findCat(s.est.catId),cur=s.est.base||S.base;
+    return `<div class="item"><div><b>${esc(s.est.info.customer||'No customer name')}</b></div><div class="p">${fmt(s.total,cur)}</div>
+    <div class="meta">${esc(s.est.ref)}${cat?' · '+esc(cat.name):''} · ${esc(countryOf(s.est.country||S.country).name)} · ${esc(s.est.info.date)}</div>
+    <button class="btn alt sm" data-act="load" data-id="${s.id}">Open</button><button class="btn danger sm" data-act="delSaved" data-id="${s.id}">Delete</button></div>`;
+  }).join(''):'<p class="empty">No saved estimates yet. Save one from the Estimate tab.</p>';
+  $('#view').innerHTML=`<div class="blk"><h2>Saved estimates</h2>${list}</div>`;
+}
+
+
+/* ---------- quote preview, print and PDF (separate actions) ---------- */
+function openQuote(){
+  $('#qpaper').innerHTML=buildQuote();
+  $('#printArea').classList.add('open');
+  $('#printArea').scrollTop=0;
+}
+function closeQuote(){$('#printArea').classList.remove('open')}
+function doPrint(){
+  openQuote();
+  setTimeout(()=>{
+    try{window.print()}catch(e){toast('Printing is blocked here. Use Save as PDF instead.')}
+  },200);
+}
+
+const PDF_FONT='"Public Sans","Segoe UI","Noto Sans",Arial,sans-serif';
+/* The quote is drawn onto canvas pages, so every language and currency symbol renders correctly. */
+function quotePages(){
+  const e=S.est,c=calc(),code=S.cur,m=v=>money(v,code),i=e.info,k=e.cond;
+  const letter=['US','CA','MX','PR'].includes(e.country||S.country);
+  const W=letter?1275:1240,H=letter?1650:1754,M=90,CW=W-2*M,pages=[];
+  let cv,x,y;
+  const np=()=>{cv=document.createElement('canvas');cv.width=W;cv.height=H;x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);x.textBaseline='top';x.textAlign='left';pages.push(cv);y=M};
+  const f=(sz,w=400)=>{x.font=`${w} ${sz}px ${PDF_FONT}`};
+  const wrap=(t,mw)=>{
+    const out=[];
+    String(t).split('\n').forEach(par=>{
+      let line='';
+      par.split(' ').forEach(word=>{
+        const test=line?line+' '+word:word;
+        if(x.measureText(test).width<=mw){line=test;return}
+        if(line){out.push(line);line=''}
+        if(x.measureText(word).width<=mw){line=word;return}
+        for(const ch of word){ // very long words and scripts without spaces
+          if(x.measureText(line+ch).width>mw){out.push(line);line=ch}else line+=ch;
+        }
+      });
+      out.push(line);
+    });
+    return out;
+  };
+  const ensure=h=>{if(y+h>H-M-40)np()};
+  const kv=(label,text)=>{
+    if(!text)return;
+    const lh=36,lw=270;f(26,400);
+    const lines=wrap(text,CW-lw);
+    lines.forEach((l,n)=>{
+      ensure(lh);
+      if(n===0){f(24,600);x.fillStyle='#5F6878';x.fillText(label,M,y+2)}
+      f(26,400);x.fillStyle='#111';x.fillText(l,M+lw,y);y+=lh;
+    });
+    y+=6;
+  };
+  const heading=t=>{ensure(70);y+=14;f(30,800);x.fillStyle='#2B2A8F';x.fillText(t,M,y);y+=44};
+
+  np();
+  const g=x.createLinearGradient(0,0,W,0);g.addColorStop(0,'#2B2A8F');g.addColorStop(.55,'#7A2FC0');g.addColorStop(1,'#E4572E');
+  x.fillStyle=g;x.fillRect(0,0,W,170);x.fillStyle='#E2AA2B';x.fillRect(0,170,W,10);
+  f(66,800);x.fillStyle='#fff';x.fillText('Quotation',M,46);
+  x.textAlign='right';f(26,500);x.fillText(e.ref,W-M,52);x.fillText(`${i.date}  ·  ${code}`,W-M,92);x.textAlign='left';
+  y=215;
+
+  kv('Customer',[i.customer,i.phone,i.email].filter(Boolean).join('  ·  ')||'-');
+  kv('Location',[i.address,i.town,i.district,i.region,countryOf(e.country||S.country).name].filter(Boolean).join(', '));
+  const cat=findCat(e.catId);if(cat)kv('Type of work',cat.name);
+  kv('Description',i.desc);
+  y+=10;
+
+  const cI=M,cQ=M+CW*.62,cR=M+CW*.81,cA=M+CW,wI=CW*.44,wQ=CW*.17;
+  const tableHead=()=>{ensure(60);x.fillStyle='#EEF0FA';x.fillRect(M,y,CW,50);f(24,700);x.fillStyle='#17203A';
+    x.textAlign='left';x.fillText('Item',cI+10,y+13);x.textAlign='right';x.fillText('Quantity',cQ,y+13);x.fillText('Unit rate',cR,y+13);x.fillText('Amount',cA-10,y+13);x.textAlign='left';
+    x.fillStyle='#2B2A8F';x.fillRect(M,y+50,CW,3);y+=60};
+  tableHead();
+  const rows=e.lines.filter(l=>num(l.qty)>0);
+  if(!rows.length){f(26,400);x.fillStyle='#5F6878';x.fillText('No priced items',cI+10,y);y+=44}
+  rows.forEach(l=>{
+    f(26,400);
+    const nm=wrap(l.name||'Item',wI-14),qt=wrap(`${l.qty} ${l.unit}`,wQ);
+    const lh=34,h=Math.max(nm.length,qt.length)*lh+18;
+    if(y+h>H-M-40){np();tableHead()}
+    x.fillStyle='#111';
+    nm.forEach((t,n)=>x.fillText(t,cI+10,y+8+n*lh));
+    x.textAlign='right';
+    qt.forEach((t,n)=>x.fillText(t,cQ,y+8+n*lh));
+    x.fillText(m(num(l.rate)*(1+num(l.waste)/100)),cR,y+8);
+    x.fillText(m(l.total),cA-10,y+8);x.textAlign='left';
+    x.fillStyle='#CDD1C6';x.fillRect(M,y+h-1,CW,2);y+=h;
+  });
+  const trow=(label,val,bold)=>{ensure(48);f(26,bold?700:400);x.fillStyle='#111';x.textAlign='left';x.fillText(label,cI+10,y+8);x.textAlign='right';x.fillText(val,cA-10,y+8);x.textAlign='left';y+=46};
+  trow('Overheads, contingency and margin',m(c.oh+c.cont+c.profit));
+  trow('Subtotal',m(c.sub),true);
+  c.taxes.filter(t=>t.on).forEach(t=>trow(`${t.name} (${t.rate}%)`,m(t.amt)));
+  ensure(80);y+=6;x.fillStyle='#FFE08A';x.fillRect(M,y,CW,64);x.fillStyle='#2B2A8F';x.fillRect(M,y,CW,5);
+  f(34,800);x.fillStyle='#17203A';x.fillText('Total',cI+10,y+16);x.textAlign='right';x.fillText(m(c.final),cA-10,y+16);x.textAlign='left';y+=84;
+  if(code!==S.base){f(22,400);x.fillStyle='#5F6878';wrap(`Equivalent: ${baseMoney(c.final)}. Rate used: 1 ${code} = ${baseMoney(basePer(code))}${S.ratesDate?' (rates set '+S.ratesDate+')':''}.`,CW).forEach(l=>{ensure(30);x.fillText(l,M,y);y+=30});y+=10}
+
+  if(k.included||k.excluded||k.payment||k.warranty||k.change||num(k.validity)){
+    heading('Terms');
+    kv('Included',k.included);kv('Excluded',k.excluded);kv('Payment',k.payment);kv('Warranty',k.warranty);kv('Changes',k.change);
+    if(num(k.validity))kv('Validity',`Valid for ${k.validity} days from ${i.date}.`);
+  }
+  ensure(120);y+=50;
+  x.fillStyle='#111';x.fillRect(M,y,CW*.42,2);x.fillRect(M+CW*.58,y,CW*.42,2);
+  f(22,400);x.fillStyle='#5F6878';x.fillText('Customer approval',M,y+10);x.fillText('Business approval',M+CW*.58,y+10);
+
+  pages.forEach((p,n)=>{const cx=p.getContext('2d');cx.font=`400 20px ${PDF_FONT}`;cx.fillStyle='#8A91A0';cx.textAlign='center';cx.textBaseline='top';cx.fillText(`${e.ref}  ·  Page ${n+1} of ${pages.length}`,W/2,H-60)});
+  return{pages,letter};
+}
+function dataUrlToBytes(u){const b=atob(u.split(',')[1]);const a=new Uint8Array(b.length);for(let n=0;n<b.length;n++)a[n]=b.charCodeAt(n);return a}
+function makePdfBlob(){
+  const {pages,letter}=quotePages();
+  const pw=letter?612:595,ph=letter?792:842;
+  const jpegs=pages.map(cv=>({w:cv.width,h:cv.height,bytes:dataUrlToBytes(cv.toDataURL('image/jpeg',.92))}));
+  const enc=new TextEncoder(),chunks=[],offs=[];let len=0;
+  const push=b=>{if(typeof b==='string')b=enc.encode(b);chunks.push(b);len+=b.length};
+  const obj=(id,fn)=>{offs[id]=len;push(`${id} 0 obj\n`);fn();push('\nendobj\n')};
+  const n=jpegs.length,total=3+3*n;
+  push('%PDF-1.4\n');
+  obj(1,()=>push('<</Type/Catalog/Pages 2 0 R>>'));
+  obj(2,()=>push(`<</Type/Pages/Count ${n}/Kids [${jpegs.map((_,i)=>`${3+3*i} 0 R`).join(' ')}]>>`));
+  jpegs.forEach((j,i)=>{
+    const pid=3+3*i,cid=4+3*i,iid=5+3*i,cs=`q ${pw} 0 0 ${ph} 0 0 cm /Im0 Do Q`;
+    obj(pid,()=>push(`<</Type/Page/Parent 2 0 R/MediaBox [0 0 ${pw} ${ph}]/Resources<</XObject<</Im0 ${iid} 0 R>>>>/Contents ${cid} 0 R>>`));
+    obj(cid,()=>push(`<</Length ${cs.length}>>\nstream\n${cs}\nendstream`));
+    obj(iid,()=>{push(`<</Type/XObject/Subtype/Image/Width ${j.w}/Height ${j.h}/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length ${j.bytes.length}>>\nstream\n`);push(j.bytes);push('\nendstream')});
+  });
+  const xr=len;
+  push(`xref\n0 ${total}\n0000000000 65535 f \n`);
+  for(let id=1;id<total;id++)push(String(offs[id]).padStart(10,'0')+' 00000 n \n');
+  push(`trailer\n<</Size ${total}/Root 1 0 R>>\nstartxref\n${xr}\n%%EOF`);
+  return new Blob(chunks,{type:'application/pdf'});
+}
+async function savePdf(){
+  let blob;
+  try{blob=makePdfBlob()}catch(err){toast('Could not build the PDF: '+err.message);return}
+  const name=(S.est.ref||'quotation')+'.pdf';
+  try{
+    const file=new File([blob],name,{type:'application/pdf'});
+    const touch=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if(touch&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:name});return;
+    }
+  }catch(err){if(err&&err.name==='AbortError')return}
+  try{
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),8000);
+    toast('PDF saved as '+name);
+  }catch(err){toast('Your browser blocked the download. Open the app in a browser tab.')}
+}
+
+/* ---------- navigation ---------- */
+function renderAbout(){
+  $('#view').innerHTML=`<div class="blk"><h2>About Work Estimator</h2><p>Work Estimator helps tradespeople, contractors, small businesses and individuals prepare structured estimates and quotations for different types of work.</p><p>Use it to list materials and services, enter quantities and rates, calculate direct costs, overheads, contingency, profit and editable tax lines, then save estimates or create a quotation PDF.</p><p class="note">The app provides planning support. It does not replace a qualified quantity surveyor, engineer, accountant, tax adviser or other licensed professional where one is required.</p><h3>Use it in your country</h3><p>Choose your country and currency in the Currency section. Check supplier prices, exchange rates, tax rules and local requirements before sending a quotation.</p></div>
+  <div class="blk"><h2>Our aim</h2><p>To make everyday estimating and quotation preparation easier, clearer and more accessible for people doing different kinds of work.</p><p><b>Website:</b> <a href="https://transcendent-cupcake-faee0e.netlify.app/" target="_blank" rel="noopener">Work Estimator</a></p></div>`;
+}
+function renderFeedback(){
+  $('#view').innerHTML=`<div class="blk"><h2>Customer Feedback</h2><p>Tell us what is working well, what is confusing, or which feature you would like us to add. Please do not include passwords, payment card details or other sensitive information.</p><div class="grid2"><div><label>Your name (optional)<input id="fb-name" autocomplete="name" placeholder="Your name"></label></div><div><label>Your email (optional)<input id="fb-email" type="email" autocomplete="email" placeholder="you@example.com"></label></div><div class="full"><label>What is your feedback about?<select id="fb-topic"><option>General feedback</option><option>Estimate or quotation</option><option>Prices and currency</option><option>Saved estimates</option><option>Problem or error</option><option>Feature request</option></select></label></div><div class="full"><label>Your message<textarea id="fb-message" rows="5" placeholder="Tell us what happened or what you would like improved…"></textarea></label></div></div><div class="actions"><button class="btn" data-act="sendFeedback">Prepare feedback email</button><button class="btn alt" data-act="clearFeedback">Clear form</button></div><p class="hint">This form does not send feedback to a server. The button prepares an email in your device's email app, if one is configured. If it does not open, copy your message and send it through your usual contact channel.</p></div>`;
+}
+function renderTerms(){
+  $('#view').innerHTML=`<div class="blk"><h2>Terms of Service</h2><p class="hint">Last updated: 22 October 2026</p><p>By using Work Estimator, you agree to these terms. If you do not agree, do not use the application.</p><h4>1. What the app does</h4><p>Work Estimator is a tool to help prepare preliminary cost estimates and quotations. You are responsible for checking the information, quantities, rates, calculations, tax settings and final quotation before using or sharing them.</p><h4>2. No professional or price guarantee</h4><p>Estimates depend on the information you enter and the accuracy of your prices. Supplier prices, labour costs, exchange rates, taxes and legal requirements can change. Outputs are not a guarantee of the actual final cost and are not professional engineering, quantity-surveying, legal, accounting or tax advice.</p><h4>3. Your responsibilities</h4><p>Use the app lawfully. Do not use it to mislead customers, violate another person's rights, or enter information you are not authorised to use. Obtain appropriate professional review for work requiring specialist design, permits, inspection or approval.</p><h4>4. Your records and backups</h4><p>Estimates and price-book data may be stored in your browser on your device. Browser data can be lost if you clear site data, change browsers or devices, or use private browsing. Keep your own copies of important quotations and records.</p><h4>5. Availability and changes</h4><p>The app may be updated, interrupted or unavailable. Features may change. We do not promise uninterrupted operation or that every device/browser will support every feature.</p><h4>6. Payments and subscriptions</h4><p>Any subscription price, trial, renewal, cancellation and refund terms must be clearly shown before a payment is taken. Do not treat a test checkout as a real payment or as proof that premium access has been activated. No payment terms are created by this page alone.</p><h4>7. Liability</h4><p>To the extent permitted by applicable law, you are responsible for decisions made using estimates produced by the app. Nothing in these terms excludes rights or liabilities that cannot legally be excluded.</p><h4>8. Contact and updates</h4><p>These terms may be updated as the service develops. Review this page periodically. Add verified business contact details before publishing a final commercial version.</p><p class="note">This is a general starter policy, not legal advice. Have it reviewed for the countries where you operate before taking paid subscriptions.</p></div>`;
+}
+function renderPrivacy(){
+  $('#view').innerHTML=`<div class="blk"><h2>Privacy Policy</h2><p class="hint">Last updated: 22 October 2026</p><p>This page explains the current intended handling of information when you use Work Estimator. Update it if you add analytics, accounts, cloud storage, payment processing or other services.</p><h4>1. Information you enter</h4><p>You may enter customer names, phone numbers, email addresses, project details, quantities, prices and quotation conditions. Avoid entering sensitive information that is not needed for an estimate.</p><h4>2. Local storage</h4><p>The current application can save estimates and price-book information in browser storage on the device you use. People with access to that device or browser profile may be able to see those records. Clearing browser data may delete them. This version does not provide a user account or cloud backup feature.</p><h4>3. Sharing and downloads</h4><p>If you create, print, download or share a quotation, the information in that quotation may be seen by anyone you send it to. Check the recipient and document before sharing.</p><h4>4. Feedback</h4><p>The feedback form prepares an email on your device and does not itself submit the message to a website server. Your email app or email provider handles any message you choose to send.</p><h4>5. Payments and third parties</h4><p>This page does not mean that payment processing or subscriptions are active. If payment, analytics, hosting or other third-party services are added, this policy must identify the relevant providers and explain what data they receive. Do not enter payment-card details into this app.</p><h4>6. Security and retention</h4><p>Protect your device and browser. We cannot guarantee that information stored locally will never be lost or accessed by someone who can use your device. Keep secure backups of important business records.</p><h4>7. Your choices</h4><p>You can avoid entering personal data, delete saved records within the app where supported, or clear the browser's site data (which may remove all locally saved app data). Consider privacy obligations before storing your customers' details.</p><h4>8. Contact and changes</h4><p>This policy may be updated when the app changes. Before public commercial launch, add a verified privacy contact and have this policy reviewed for the laws that apply to your business and customers.</p><p class="note">This is a starter privacy notice, not a guarantee of legal compliance. It must be checked against the actual services and data practices used by the published app.</p></div>`;
+}
+function renderHelp(){
+  $('#view').innerHTML=`<div class="blk"><h2>Help & Support</h2><h4>How to prepare an estimate</h4><ol><li>Choose your country and currency.</li><li>Select the type of work.</li><li>Enter customer and project details.</li><li>Add each material, service or cost, then enter quantity and rate.</li><li>Review overheads, contingency, profit and applicable taxes.</li><li>Save the estimate and preview the quotation. Check all details before sharing or saving as PDF.</li></ol><h4>Important checks</h4><ul><li>Use current prices from your suppliers.</li><li>Confirm tax rates and local rules with the relevant authority.</li><li>Keep a separate backup of important quotations.</li><li>If the screen is blank, open the published website in an up-to-date browser such as Chrome rather than opening the HTML file from Downloads.</li></ul><p><b>Website:</b> <a href="https://transcendent-cupcake-faee0e.netlify.app/" target="_blank" rel="noopener">Open Work Estimator</a></p><p class="note">A verified support email or phone number has not been configured in this page. Add official contact details before publishing.</p></div>`;
+}
+const VIEWS={estimate:renderEstimate,catalogue:renderCatalogue,prices:renderPrices,currency:renderCurrency,saved:renderSaved,feedback:renderFeedback,about:renderAbout,terms:renderTerms,privacy:renderPrivacy,help:renderHelp};
+function setTab(t){
+  S.tab=t;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  VIEWS[t]();
+  setCurrencyChip();
+  window.scrollTo(0,0);
+}
+let _tt;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2600)}
+
+/* ---------- events ---------- */
+function setPath(o,path,v){const p=path.split('.');const last=p.pop();p.forEach(k=>o=o[k]);o[last]=v}
+const view=$('#view');
+
+view.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset.k){
+    setPath(S.est,t.dataset.k,t.value);
+    if(/^(overhead|contingency|profit)$/.test(t.dataset.k))updateTotals();else persist();
+  }else if(t.dataset.f){
+    const l=S.est.lines.find(x=>x.id===t.closest('.ln').dataset.id);if(!l)return;
+    l[t.dataset.f]=t.value;
+    if(t.dataset.f==='group')t.closest('.ln').dataset.g=t.value;
+    updateTotals();
+  }else if(t.dataset.tx==='rate'){
+    S.est.taxes[+t.dataset.i].rate=t.value;updateTotals();
+  }else if(t.dataset.tx==='name'){
+    S.est.taxes[+t.dataset.i].name=t.value;persist();
+  }else if(t.dataset.rate){
+    const v=num(t.value);
+    if(v>0){
+      if(t.dataset.rate==='__base'){S.r[S.base]=v}
+      else{if(!hasRate(S.base))S.r[S.base]=1;S.r[t.dataset.rate]=S.r[S.base]/v}
+      persist();runConv();
+    }
+  }else if(t.dataset.set){
+    S[t.dataset.set]=t.value;persist();
+  }else if(t.id==='catq'){drawCatList(t.value)}
+  else if(t.id==='cv-amt'){runConv()}
+});
+view.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='catSel'){applyCategory(t.value)}
+  else if(t.id==='firstCountry'){
+    const b=document.querySelector('[data-act=confirmCountry]');
+    if(b)b.textContent='Use '+countryOf(t.value).name;
+    b.dataset.iso=t.value;
+  }
+  else if(t.id==='countrySel'){
+    const had=hasWork(S.est);
+    setCountry(t.value);renderCurrency();
+    toast(had?'Country changed. Your previous estimate was saved.':'Country changed');
+  }
+  else if(t.dataset.tx==='on'){S.est.taxes[+t.dataset.i].on=t.checked;updateTotals()}
+  else if(t.dataset.f==='name'){
+    const row=t.closest('.ln'),l=S.est.lines.find(x=>x.id===row.dataset.id);if(!l)return;
+    const p=lookupPrice(l.name);
+    if(p){
+      if(!num(l.rate)){l.rate=p.price;row.querySelector('[data-f=rate]').value=p.price}
+      if(!l.unit){l.unit=p.unit;row.querySelector('[data-f=unit]').value=p.unit}
+    }
+    updateTotals();
+  }
+  else if(t.dataset.pb==='price'){
+    const p=S.prices.find(x=>x.id===t.dataset.id);const v=num(t.value);
+    if(p&&v>0){p.price=v;p.date=today();persist();drawPrices();toast('Price updated')}
+  }
+  else if(t.id==='cv-from'||t.id==='cv-to'){runConv()}
+  else if(t.dataset.rate||t.dataset.set){if(S.tab==='currency')renderCurrency()}
+});
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,E=S.est;
+  switch(a){
+    case'tab':setTab(b.dataset.tab);break;
+    case'sendFeedback':{const name=$('#fb-name')?.value.trim()||'Not provided',email=$('#fb-email')?.value.trim()||'Not provided',topic=$('#fb-topic')?.value||'General feedback',message=$('#fb-message')?.value.trim()||'';if(!message){toast('Please enter your feedback first');break}const body=`Name: ${name}\nEmail: ${email}\nTopic: ${topic}\n\n${message}`;const subject=encodeURIComponent('Work Estimator feedback: '+topic);window.location.href='mailto:?subject='+subject+'&body='+encodeURIComponent(body);break}
+    case'clearFeedback':renderFeedback();break;
+    case'confirmCountry':{
+      const iso=b.dataset.iso||$('#firstCountry').value;
+      setCountry(iso,{keepEstimate:!hasWork(S.est)?false:true});
+      renderEstimate();setCurrencyChip();toast(countryOf(iso).name+' selected');break;
+    }
+    case'start':{
+      S.est=newEstimate();setTab('estimate');applyCategory(b.dataset.cat);
+      $('#catSel').value=b.dataset.cat;break;
+    }
+    case'addLine':{const l=blankLine();E.lines.push(l);renderLines();const el=document.querySelector(`[data-id="${l.id}"] [data-f=name]`);if(el)el.focus();break}
+    case'rm':{const id=b.closest('.ln').dataset.id;E.lines=E.lines.filter(l=>l.id!==id);renderLines();updateTotals();break}
+    case'saveRate':{
+      const l=E.lines.find(x=>x.id===b.closest('.ln').dataset.id);
+      if(!l||!l.name.trim()||!num(l.rate)){toast('Add an item name and a rate first');break}
+      upsertPrice({name:l.name.trim(),unit:l.unit||'item',price:num(l.rate),region:E.info.region||'All regions',supplier:''});
+      toast('Saved to price book');break;
+    }
+    case'saveEst':snapshotSave();persist();toast('Estimate saved');break;
+    case'preview':openQuote();break;
+    case'print':doPrint();break;
+    case'pdf':savePdf();break;
+    case'closeQuote':closeQuote();break;
+    case'copy':copyText(buildText());break;
+    case'newEst':S.seq++;S.est=newEstimate();persist();renderEstimate();window.scrollTo(0,0);toast('New estimate started');break;
+    case'pbAdd':{
+      const name=$('#pb-name').value.trim(),price=num($('#pb-price').value);
+      if(!name||!price){toast('Enter an item name and a price');break}
+      upsertPrice({name,unit:$('#pb-unit').value.trim()||'item',price,region:$('#pb-region').value.trim()||'All regions',supplier:$('#pb-sup').value.trim()});
+      ['pb-name','pb-unit','pb-price','pb-sup'].forEach(id=>$('#'+id).value='');
+      drawPrices();toast('Added to price book');break;
+    }
+    case'pbDel':S.prices=S.prices.filter(p=>p.id!==b.dataset.id);refreshNameList();persist();drawPrices();break;
+    case'setcur':S.cur=b.dataset.code;persist();renderCurrency();setCurrencyChip();break;
+    case'rmcur':{
+      const c=b.dataset.code;S.watch=S.watch.filter(x=>x!==c);if(S.cur===c)S.cur=S.base;persist();renderCurrency();setCurrencyChip();break;
+    }
+    case'addcur':{
+      const code=$('#nc-code').value,rate=num($('#nc-rate').value);
+      if(!code){toast('Choose a currency first');break}
+      if(!S.watch.includes(code))S.watch.push(code);
+      if(rate>0){if(!hasRate(S.base))S.r[S.base]=1;S.r[code]=S.r[S.base]/rate}
+      persist();renderCurrency();toast(code+' added');break;
+    }
+    case'fetch':fetchRates();break;
+    case'resetRates':S.r={...SAMPLE_PER_USD};S.ratesDate='';persist();renderCurrency();toast('Sample rates restored');break;
+    case'swap':{const f=$('#cv-from'),t=$('#cv-to'),v=f.value;f.value=t.value;t.value=v;runConv();break}
+    case'load':{
+      const s=S.saved.find(x=>x.id===b.dataset.id);if(!s)break;
+      const iso=s.est.country||S.country;
+      if(iso!==S.country)setCountry(iso,{keepEstimate:true});
+      const base=newEstimate();S.est=Object.assign(base,clone(s.est),{info:Object.assign(base.info,s.est.info),cond:Object.assign(base.cond,s.est.cond)});
+      setTab('estimate');toast('Estimate opened');break;
+    }
+    case'delSaved':S.saved=S.saved.filter(s=>s.id!==b.dataset.id);persist();renderSaved();break;
+  }
+});
+
+/* ---------- start ---------- */
+(async function init(){
+  await loadState();
+  refreshNameList();
+  setTab('estimate');
+})();
+</script>
+</body>
+</html>
