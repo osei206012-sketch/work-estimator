@@ -989,6 +989,12 @@ function renderHelp(){
 }
 function renderSubscribe(){
   const used=trialUsage(),remaining=trialRemaining(),active=isSubscribed();
+ 
+<div class="full">
+  <label for="billingEmail">Email for Paystack checkout</label>
+  <input id="billingEmail" type="email" autocomplete="email" placeholder="you@example.com" required>
+</div>
+
   $('#view').innerHTML=`<div class="blk"><h2>Work Estimator Subscription</h2><p>Use your 3 free estimates to try the app. When the free trial ends, a subscription is required to continue using estimate and quotation actions.</p><div class="total"><small>Monthly subscription</small><div class="big">GH₵150</div><small>per month · price shown in Ghana cedis</small></div><div class="row"><span>Free estimates used</span><b>${used} / ${FREE_TRIAL_LIMIT}</b></div><div class="row"><span>Free estimates remaining</span><b>${remaining}</b></div><div class="row"><span>Subscription status</span><b>${active?'Active on this browser':'Not active'}</b></div>${active?'<p class="note">Your browser currently stores an active status. This is not proof of a verified payment.</p>':'<p class="note warn">Paystack live public key has been added to this app, but checkout and secure payment verification are not connected yet. Do not pay through this page until the backend is configured to verify the amount and transaction before activating a subscription.</p>'}<div class="actions"><button class="btn" data-act="subscribePay">Subscribe for GH₵150/month</button><button class="btn alt" data-act="tab" data-tab="estimate">Back to estimator</button></div><h4>How the trial works</h4><ol><li>You can use up to 3 free estimates.</li><li>The app counts a trial when you save an estimate or create a quotation preview.</li><li>After the trial, estimate and quotation actions are locked until a real subscription system is connected and payment is verified.</li></ol><p class="hint">Trial count is stored in this browser only and can be reset by clearing browser data. This is a front-end trial, not secure account-based billing. For a public paid launch, usage and subscription status must be checked on a server.</p></div>`;
 }
 const VIEWS={estimate:renderEstimate,catalogue:renderCatalogue,prices:renderPrices,currency:renderCurrency,saved:renderSaved,subscribe:renderSubscribe,feedback:renderFeedback,about:renderAbout,terms:renderTerms,privacy:renderPrivacy,help:renderHelp};
@@ -1063,12 +1069,48 @@ view.addEventListener('change',e=>{
   else if(t.dataset.rate||t.dataset.set){if(S.tab==='currency')renderCurrency()}
 });
 
-document.addEventListener('click',e=>{
+document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const a=b.dataset.act,E=S.est;
   switch(a){
     case'tab':setTab(b.dataset.tab);break;
-    case'subscribePay':toast('Paystack public key is configured. Secure checkout and server-side payment verification must be connected before accepting payments.');break;
+    
+case'subscribePay':{
+  const email=$('#billingEmail')?.value.trim()||'';
+  if(!/^[^\s@]+\.[^\s@]+$/.test(email) || !email.includes('@')){
+    toast('Enter a valid email address first');
+    $('#billingEmail')?.focus();
+    break;
+  }
+  try{
+    localStorage.setItem('we-billing-email',email);
+    b.disabled=true;
+    b.textContent='Connecting to Paystack…';
+
+    const response=await fetch(
+      '/.netlify/functions/paystack-initialize',
+      {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email})
+      }
+    );
+
+    const result=await response.json();
+
+    if(!response.ok || !result.authorization_url){
+      throw new Error(result.error||'Checkout could not start');
+    }
+
+    window.location.assign(result.authorization_url);
+  }catch(err){
+    toast(err.message||'Could not start checkout');
+    b.disabled=false;
+    b.textContent='Subscribe for GH₵150/month';
+  }
+  break;
+}
+
     case'sendFeedback':{const name=$('#fb-name')?.value.trim()||'Not provided',email=$('#fb-email')?.value.trim()||'Not provided',topic=$('#fb-topic')?.value||'General feedback',message=$('#fb-message')?.value.trim()||'';if(!message){toast('Please enter your feedback first');break}const body=`Name: ${name}\nEmail: ${email}\nTopic: ${topic}\n\n${message}`;const subject=encodeURIComponent('Work Estimator feedback: '+topic);window.location.href='mailto:?subject='+subject+'&body='+encodeURIComponent(body);break}
     case'clearFeedback':renderFeedback();break;
     case'confirmCountry':{
