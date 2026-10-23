@@ -1170,12 +1170,52 @@ case'subscribePay':{
   }
 });
 
+  
+async function verifyReturnedPayment() {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get('payment') !== 'return') return;
+
+  const reference = params.get('reference');
+
+  if (!reference) {
+    toast('Payment reference not found. Your subscription is not active.');
+    return;
+  }
+
+  try {
+    const response = await fetch('/.netlify/functions/paystack-verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reference })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.verified !== true) {
+      toast('Payment could not be verified. Your subscription remains inactive.');
+      return;
+    }
+
+    localStorage.setItem('we-subscription-status', 'active');
+    toast('Payment verified successfully.');
+    history.replaceState({}, '', window.location.pathname);
+    renderSubscribe();
+
+  } catch (error) {
+    toast('Could not verify payment. Please try again later.');
+  }
+}
+
 /* ---------- start ---------- */
+
 (async function init(){
   await loadState();
   refreshNameList();
   setTab('estimate');
+  await verifyReturnedPayment();
 })();
+
 </script>
 </body>
 </html>
